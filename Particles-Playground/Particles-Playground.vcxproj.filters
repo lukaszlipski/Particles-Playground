@@ -24,12 +24,18 @@
     <ClCompile Include="System\window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="System\graphic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="System\window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="System\graphic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
