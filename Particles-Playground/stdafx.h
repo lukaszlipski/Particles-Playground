@@ -12,6 +12,7 @@
 
 // std
 #include <cinttypes>
+#include <cassert>
 #include <string>
 #include <array>
 #include <vector>

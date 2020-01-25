@@ -1,4 +1,12 @@
 #pragma once
+#include "fence.h"
+
+enum class QueueType
+{
+    Direct = 0,
+    Compute,
+    Copy
+};
 
 class Graphic
 {
@@ -18,6 +26,13 @@ public:
         return *instance;
     }
 
+    void PreUpdate();
+    void PostUpdate();
+    ID3D12CommandQueue* GetQueue(QueueType type) const;
+    ID3D12CommandAllocator* GetCommandAllocator(QueueType type, uint32_t index) const;
+    ID3D12CommandAllocator* GetCurrentCommandAllocator(QueueType type) const;
+    CD3DX12_CPU_DESCRIPTOR_HANDLE GetCurrentRenderTargetHandle();
+
     inline ID3D12Device* GetDevice() const { return mDevice; }
     inline ID3D12CommandQueue* GetDirectQueue() const { return mDirectQueue; }
     inline ID3D12CommandQueue* GetComputeQueue() const { return mComputeQueue; }
@@ -27,7 +42,10 @@ public:
     inline uint32_t GetRTVHandleSize() const { return mRTVHandleSize; }
     inline uint32_t GetCBVHandleSize() const { return mCBVHandleSize; }
     inline ID3D12Resource* GetRenderTarget(uint32_t index) const { return mRenderTargets[index]; }
+    inline ID3D12Resource* GetCurrentRenderTarget() const { return mRenderTargets[GetCurrentFrameIndex()]; }
     inline ID3D12DescriptorHeap* GetSwapChainDescriptorHeap() const { return mSwapChainDescHeap; }
+    inline Fence* GetFence(uint32_t index) { return mFences[index].get(); }
+    inline Fence* GetCurrentFence() { return mFences[GetCurrentFrameIndex()].get(); }
 
 private:
     explicit Graphic() = default;
@@ -50,6 +68,10 @@ private:
     ID3D12CommandQueue* mComputeQueue = nullptr;
     ID3D12CommandQueue* mCopyQueue = nullptr;
 
+    std::array<ID3D12CommandAllocator*, mFrameCount> mDirectCommandAllocator;
+    std::array<ID3D12CommandAllocator*, mFrameCount> mComputeCommandAllocator;
+    std::array<ID3D12CommandAllocator*, mFrameCount> mCopyCommandAllocator;
     std::array<ID3D12Resource*, mFrameCount> mRenderTargets;
+    std::array<upFence, mFrameCount> mFences;
 
 };

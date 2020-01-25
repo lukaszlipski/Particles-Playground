@@ -162,11 +162,14 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="System\fence.cpp" />
     <ClCompile Include="System\graphic.cpp" />
     <ClCompile Include="System\window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Includes\d3dx12.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="System\fence.h" />
     <ClInclude Include="System\graphic.h" />
     <ClInclude Include="System\window.h" />
   </ItemGroup>

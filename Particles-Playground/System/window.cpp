@@ -15,7 +15,7 @@ bool Window::Startup()
 
     if (!RegisterClassEx(&windowClass)) { return false; }
 
-    const DWORD style = WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME ^ WS_MAXIMIZEBOX | WS_VISIBLE;
+    const DWORD style = WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME ^ WS_MAXIMIZEBOX;
 
     RECT windowsRect = {};
     windowsRect.right = mWidth;

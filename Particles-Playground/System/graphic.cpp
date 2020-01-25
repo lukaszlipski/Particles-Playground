@@ -31,6 +31,24 @@ bool Graphic::Startup()
 
     if (!CreateSwapChain()) { return false; }
 
+    for (ID3D12CommandAllocator*& allocator : mDirectCommandAllocator)
+    {
+        if (FAILED(mDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&allocator)))) { return false; }
+    }
+    for (ID3D12CommandAllocator*& allocator : mComputeCommandAllocator)
+    {
+        if (FAILED(mDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COMPUTE, IID_PPV_ARGS(&allocator)))) { return false; }
+    }
+    for (ID3D12CommandAllocator*& allocator : mCopyCommandAllocator)
+    {
+        if (FAILED(mDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COPY, IID_PPV_ARGS(&allocator)))) { return false; }
+    }
+
+    for (upFence& fence : mFences)
+    {
+        fence = std::make_unique<Fence>();
+    }
+
     // #TODO: Implement full screen support
     const HWND handle = Window::Get().GetHandle();
     mDXGIFactory->MakeWindowAssociation(handle, DXGI_MWA_NO_ALT_ENTER);
@@ -40,6 +58,14 @@ bool Graphic::Startup()
 
 bool Graphic::Shutdown()
 {
+    GetCurrentFence()->Flush(QueueType::Direct);
+
+    for (upFence& fence : mFences) { fence.reset(); }
+
+    for (ID3D12CommandAllocator* allocator : mDirectCommandAllocator) { allocator->Release(); }
+    for (ID3D12CommandAllocator* allocator : mComputeCommandAllocator) { allocator->Release(); }
+    for (ID3D12CommandAllocator* allocator : mCopyCommandAllocator) { allocator->Release(); }
+
     if (mCopyQueue) { mCopyQueue->Release(); }
     if (mComputeQueue) { mComputeQueue->Release(); }
     if (mDirectQueue) { mDirectQueue->Release(); }
@@ -57,6 +83,60 @@ bool Graphic::Shutdown()
     if (mDebugLayer) { mDebugLayer->Release(); }
 
     return true;
+}
+
+void Graphic::PreUpdate()
+{
+    Graphic::Get().GetCurrentFence()->WaitOnCPU();
+
+    ID3D12CommandAllocator* allocator = Graphic::Get().GetCurrentCommandAllocator(QueueType::Direct);
+    allocator->Reset();
+}
+
+void Graphic::PostUpdate()
+{
+    Graphic::Get().GetCurrentFence()->Signal(QueueType::Direct);
+    mSwapChain->Present(1, 0);
+}
+
+ID3D12CommandQueue* Graphic::GetQueue(QueueType type) const
+{
+    switch (type)
+    {
+    case QueueType::Direct:
+        return mDirectQueue;
+    case QueueType::Compute:
+        return mComputeQueue;
+    case QueueType::Copy:
+        return mCopyQueue;
+    default:
+        return nullptr;
+    }
+}
+
+ID3D12CommandAllocator* Graphic::GetCommandAllocator(QueueType type, uint32_t index) const
+{
+    switch (type)
+    {
+    case QueueType::Direct:
+        return mDirectCommandAllocator[index];
+    case QueueType::Compute:
+        return mComputeCommandAllocator[index];
+    case QueueType::Copy:
+        return mComputeCommandAllocator[index];
+    default:
+        return nullptr;
+    }
+}
+
+ID3D12CommandAllocator* Graphic::GetCurrentCommandAllocator(QueueType type) const
+{
+    return GetCommandAllocator(type, GetCurrentFrameIndex());
+}
+
+CD3DX12_CPU_DESCRIPTOR_HANDLE Graphic::GetCurrentRenderTargetHandle()
+{
+    return CD3DX12_CPU_DESCRIPTOR_HANDLE(mSwapChainDescHeap->GetCPUDescriptorHandleForHeapStart(), GetCurrentFrameIndex(), GetRTVHandleSize());
 }
 
 bool Graphic::EnableDebugLayer()
