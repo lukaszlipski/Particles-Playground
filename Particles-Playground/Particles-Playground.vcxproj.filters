@@ -30,6 +30,9 @@
     <ClCompile Include="System\fence.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="System\commandlist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -45,6 +48,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="System\fence.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="System\commandlist.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

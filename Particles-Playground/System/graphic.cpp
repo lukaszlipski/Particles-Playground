@@ -139,6 +139,21 @@ CD3DX12_CPU_DESCRIPTOR_HANDLE Graphic::GetCurrentRenderTargetHandle()
     return CD3DX12_CPU_DESCRIPTOR_HANDLE(mSwapChainDescHeap->GetCPUDescriptorHandleForHeapStart(), GetCurrentFrameIndex(), GetRTVHandleSize());
 }
 
+D3D12_COMMAND_LIST_TYPE Graphic::GetCommandListType(QueueType type)
+{
+    switch (type)
+    {
+    case QueueType::Direct:
+        return D3D12_COMMAND_LIST_TYPE_DIRECT;
+    case QueueType::Compute:
+        return D3D12_COMMAND_LIST_TYPE_COMPUTE;
+    case QueueType::Copy:
+        return D3D12_COMMAND_LIST_TYPE_COPY;
+    default:
+        return D3D12_COMMAND_LIST_TYPE_DIRECT;
+    }
+}
+
 bool Graphic::EnableDebugLayer()
 {
     if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&mDebugLayer))))

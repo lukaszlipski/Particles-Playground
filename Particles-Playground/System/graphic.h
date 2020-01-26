@@ -47,6 +47,8 @@ public:
     inline Fence* GetFence(uint32_t index) { return mFences[index].get(); }
     inline Fence* GetCurrentFence() { return mFences[GetCurrentFrameIndex()].get(); }
 
+    static D3D12_COMMAND_LIST_TYPE GetCommandListType(QueueType type);
+
 private:
     explicit Graphic() = default;
 
