@@ -58,8 +58,6 @@ bool Graphic::Startup()
 
 bool Graphic::Shutdown()
 {
-    GetCurrentFence()->Flush(QueueType::Direct);
-
     for (upFence& fence : mFences) { fence.reset(); }
 
     for (ID3D12CommandAllocator* allocator : mDirectCommandAllocator) { allocator->Release(); }
@@ -89,7 +87,13 @@ void Graphic::PreUpdate()
 {
     Graphic::Get().GetCurrentFence()->WaitOnCPU();
 
-    ID3D12CommandAllocator* allocator = Graphic::Get().GetCurrentCommandAllocator(QueueType::Direct);
+    ID3D12CommandAllocator* allocator = Graphic::Get().GetCurrentCommandAllocator(QueueType::Copy);
+    allocator->Reset();
+
+    allocator = Graphic::Get().GetCurrentCommandAllocator(QueueType::Compute);
+    allocator->Reset();
+
+    allocator = Graphic::Get().GetCurrentCommandAllocator(QueueType::Direct);
     allocator->Reset();
 }
 
@@ -123,7 +127,7 @@ ID3D12CommandAllocator* Graphic::GetCommandAllocator(QueueType type, uint32_t in
     case QueueType::Compute:
         return mComputeCommandAllocator[index];
     case QueueType::Copy:
-        return mComputeCommandAllocator[index];
+        return mCopyCommandAllocator[index];
     default:
         return nullptr;
     }

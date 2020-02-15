@@ -4,7 +4,7 @@
 CommandList::CommandList(QueueType type)
     : mType(type)
 {
-    ID3D12CommandAllocator* allocator = Graphic::Get().GetCurrentCommandAllocator(QueueType::Direct);
+    ID3D12CommandAllocator* allocator = Graphic::Get().GetCurrentCommandAllocator(type);
     const D3D12_COMMAND_LIST_TYPE commandListType = Graphic::GetCommandListType(type);
     Graphic::Get().GetDevice()->CreateCommandList(0, commandListType, allocator, nullptr, IID_PPV_ARGS(&mCommandList));
 }

@@ -18,6 +18,8 @@ public:
 
     void Submit();
 
+    inline ID3D12GraphicsCommandList* Get() { return mCommandList; }
+
 private:
     QueueType mType;
     ID3D12GraphicsCommandList* mCommandList = nullptr;

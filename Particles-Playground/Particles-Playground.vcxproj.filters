@@ -33,6 +33,9 @@
     <ClCompile Include="System\commandlist.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="System\psomanager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -53,5 +56,15 @@
     <ClInclude Include="System\commandlist.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="System\psomanager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shaders\Source\psdefault.hlsl" />
+    <FxCompile Include="Shaders\Source\vsdefault.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\Source\default.hlsli" />
   </ItemGroup>
 </Project>
