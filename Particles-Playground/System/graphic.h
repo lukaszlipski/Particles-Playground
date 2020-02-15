@@ -38,7 +38,7 @@ public:
     inline ID3D12CommandQueue* GetComputeQueue() const { return mComputeQueue; }
     inline ID3D12CommandQueue* GetCopyQueue() const { return mCopyQueue; }
     inline uint32_t GetFrameCount() const { return mFrameCount; }
-    inline uint32_t GetCurrentFrameIndex() const { return mSwapChain->GetCurrentBackBufferIndex(); }
+    inline uint32_t GetCurrentFrameIndex() const { return mCurrentFrameIdx; }
     inline uint32_t GetRTVHandleSize() const { return mRTVHandleSize; }
     inline uint32_t GetCBVHandleSize() const { return mCBVHandleSize; }
     inline ID3D12Resource* GetRenderTarget(uint32_t index) const { return mRenderTargets[index]; }
@@ -59,6 +59,7 @@ private:
     static const uint32_t mFrameCount = 3;
     uint32_t mRTVHandleSize = 0;
     uint32_t mCBVHandleSize = 0;
+    uint32_t mCurrentFrameIdx = 0;
 
     ID3D12Debug* mDebugLayer = nullptr;
     IDXGIFactory4* mDXGIFactory = nullptr;

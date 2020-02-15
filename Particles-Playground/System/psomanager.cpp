@@ -1,6 +1,7 @@
 #include "psomanager.h"
 #include "graphic.h"
-#include "CommandList.h"
+#include "vertexformats.h"
+#include "commandlist.h"
 
 const std::wstring SHADER_FOLDER = L"Shaders/";
 
@@ -97,13 +98,9 @@ bool PSOManager::SetupDefaultPSO()
     D3DReadFileToBlob(vsShaderFileName.c_str(), &vertexShader);
     D3DReadFileToBlob(psShaderFileName.c_str(), &pixelShader);
 
-    std::array<D3D12_INPUT_ELEMENT_DESC, 1> inputs = {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-    };
-
     D3D12_GRAPHICS_PIPELINE_STATE_DESC info{};
     info.pRootSignature = mRootSigMap[rootSig];
-    info.InputLayout = { inputs.data() , static_cast<uint32_t>(inputs.size()) };
+    info.InputLayout = { DefaultVertexFormatDesc.data() , static_cast<uint32_t>(DefaultVertexFormatDesc.size()) };
     info.VS = CD3DX12_SHADER_BYTECODE(vertexShader);
     info.PS = CD3DX12_SHADER_BYTECODE(pixelShader);
     //info.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);

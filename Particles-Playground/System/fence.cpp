@@ -4,7 +4,8 @@
 Fence::Fence()
 {
     ID3D12Device* device = Graphic::Get().GetDevice();
-    assert(SUCCEEDED(device->CreateFence(mValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence))));
+    HRESULT result = device->CreateFence(mValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence));
+    assert(SUCCEEDED(result));
     mEvent = CreateEvent(nullptr, false, false, nullptr);
 }
 

@@ -12,6 +12,8 @@
 #undef min
 #undef max
 
+using namespace DirectX;
+
 // std
 #include <cinttypes>
 #include <cassert>

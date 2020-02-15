@@ -101,6 +101,7 @@ void Graphic::PostUpdate()
 {
     Graphic::Get().GetCurrentFence()->Signal(QueueType::Direct);
     mSwapChain->Present(1, 0);
+    mCurrentFrameIdx = mSwapChain->GetCurrentBackBufferIndex();
 }
 
 ID3D12CommandQueue* Graphic::GetQueue(QueueType type) const
@@ -236,6 +237,8 @@ bool Graphic::CreateSwapChain()
 
         descHandle.Offset(mRTVHandleSize);
     }
+
+    mCurrentFrameIdx = mSwapChain->GetCurrentBackBufferIndex();
 
     return true;
 }

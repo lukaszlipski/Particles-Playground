@@ -183,6 +183,7 @@
     <ClInclude Include="System\fence.h" />
     <ClInclude Include="System\graphic.h" />
     <ClInclude Include="System\psomanager.h" />
+    <ClInclude Include="System\vertexformats.h" />
     <ClInclude Include="System\window.h" />
   </ItemGroup>
   <ItemGroup>

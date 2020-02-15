@@ -2,6 +2,7 @@
 #include "System/graphic.h"
 #include "System/psomanager.h"
 #include "System/commandlist.h"
+#include "System/vertexformats.h"
 
 int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int32_t nShowCmd)
 {
@@ -10,16 +11,11 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     Graphic::Get().Startup();
     PSOManager::Get().Startup();
 
-    struct Vertex
+    DefaultVertex vertices[] =
     {
-        DirectX::XMFLOAT3 position;
-    };
-
-    Vertex vertices[] =
-    {
-        { { 0.0f, 0.5f, 0.0f } },
-        { { 0.5f, -0.5f, 0.0f } },
-        { { -0.5f, -0.5f, 0.0f } }
+        { { 0.0f, 0.5f, 0.0f }, {0.f,0.f} },
+        { { 0.5f, -0.5f, 0.0f }, {0.f,0.f} },
+        { { -0.5f, -0.5f, 0.0f }, {0.f,0.f} }
     };
 
     // --- Upload vertex data
@@ -54,7 +50,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
     vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
     vertexBufferView.SizeInBytes = sizeof(vertices);
-    vertexBufferView.StrideInBytes = sizeof(Vertex);
+    vertexBufferView.StrideInBytes = sizeof(DefaultVertex);
 
     copyFence.Flush(QueueType::Direct);
     // ---

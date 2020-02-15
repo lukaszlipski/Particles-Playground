@@ -12,6 +12,7 @@ struct PSContants
 struct VSInput
 {
     float3 pos : POSITION;
+    float3 texCoord : TEXCOORD;
 };
 
 struct VSOutput
