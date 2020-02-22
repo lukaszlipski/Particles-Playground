@@ -173,6 +173,7 @@
     <ClCompile Include="System\commandlist.cpp" />
     <ClCompile Include="System\fence.cpp" />
     <ClCompile Include="System\graphic.cpp" />
+    <ClCompile Include="System\meshmanager.cpp" />
     <ClCompile Include="System\psomanager.cpp" />
     <ClCompile Include="System\window.cpp" />
   </ItemGroup>
@@ -182,6 +183,7 @@
     <ClInclude Include="System\commandlist.h" />
     <ClInclude Include="System\fence.h" />
     <ClInclude Include="System\graphic.h" />
+    <ClInclude Include="System\meshmanager.h" />
     <ClInclude Include="System\psomanager.h" />
     <ClInclude Include="System\vertexformats.h" />
     <ClInclude Include="System\window.h" />

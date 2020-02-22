@@ -3,6 +3,7 @@
 #include "System/psomanager.h"
 #include "System/commandlist.h"
 #include "System/vertexformats.h"
+#include "System/meshmanager.h"
 
 int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int32_t nShowCmd)
 {
@@ -10,51 +11,10 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     Window::Get().Startup();
     Graphic::Get().Startup();
     PSOManager::Get().Startup();
+    MeshManager::Get().Startup();
 
-    DefaultVertex vertices[] =
-    {
-        { { 0.0f, 0.5f, 0.0f }, {0.f,0.f} },
-        { { 0.5f, -0.5f, 0.0f }, {0.f,0.f} },
-        { { -0.5f, -0.5f, 0.0f }, {0.f,0.f} }
-    };
 
-    // --- Upload vertex data
-    ID3D12Resource* vertexBuffer = nullptr;
-    ID3D12Resource* stageBuff = nullptr;
-
-    Graphic::Get().GetDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(sizeof(vertices)), D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&vertexBuffer));
-    Graphic::Get().GetDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(sizeof(vertices)), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&stageBuff));
-
-    D3D12_SUBRESOURCE_DATA data{};
-    data.pData = vertices;
-    data.RowPitch = sizeof(vertices);
-    data.SlicePitch = data.RowPitch;
-
-    Fence copyFence;
-    {
-        CommandList commandList(QueueType::Copy);
-        UpdateSubresources<1>(commandList.Get(), vertexBuffer, stageBuff, 0, 0, 1, &data);
-
-        commandList.Submit();
-
-        copyFence.Signal(QueueType::Copy);
-        copyFence.Wait(QueueType::Direct);
-    }
-    {
-        CommandList commandList(QueueType::Direct);
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(vertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-        commandList->ResourceBarrier(1, &barrier);
-        commandList.Submit();
-    }
-
-    D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
-    vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
-    vertexBufferView.SizeInBytes = sizeof(vertices);
-    vertexBufferView.StrideInBytes = sizeof(DefaultVertex);
-
-    copyFence.Flush(QueueType::Direct);
-    // ---
-
+    MeshManager::Get().PostInit();
     Window::Get().Show();
     while (Window::Get().IsRunning())
     {
@@ -73,7 +33,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
 
         commandList->OMSetRenderTargets(1, &Graphic::Get().GetCurrentRenderTargetHandle(), false, nullptr);
 
-        commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
+        MeshManager::Get().Bind(commandList, MeshType::Square);
         const float offset = 0.2f;
         commandList->SetGraphicsRoot32BitConstants(0, 1, &offset, 0);
         const float green = 0.5f;
@@ -82,8 +42,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
         commandList->RSSetViewports(1, &CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(Window::Get().GetWidth()), static_cast<float>(Window::Get().GetHeight())));
         commandList->RSSetScissorRects(1, &CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX));
 
-        commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        commandList->DrawInstanced(3, 1, 0, 0);
+        MeshManager::Get().Draw(commandList, MeshType::Square);
 
         barrier = CD3DX12_RESOURCE_BARRIER::Transition(Graphic::Get().GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
         commandList->ResourceBarrier(1, &barrier);
@@ -95,9 +54,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
 
     Graphic::Get().GetCurrentFence()->Flush(QueueType::Direct);
 
-    stageBuff->Release();
-    vertexBuffer->Release();
-
+    MeshManager::Get().Shutdown();
     PSOManager::Get().Shutdown();
     Graphic::Get().Shutdown();
     Window::Get().Shutdown();

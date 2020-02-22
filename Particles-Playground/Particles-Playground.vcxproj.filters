@@ -36,6 +36,9 @@
     <ClCompile Include="System\psomanager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="System\meshmanager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -60,6 +63,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="System\vertexformats.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="System\meshmanager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
