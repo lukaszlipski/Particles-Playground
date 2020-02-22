@@ -1,25 +1,13 @@
-#include "System/window.h"
-#include "System/graphic.h"
-#include "System/psomanager.h"
-#include "System/commandlist.h"
-#include "System/vertexformats.h"
-#include "System/meshmanager.h"
+#include "System/engine.h"
 
 int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int32_t nShowCmd)
 {
+    Engine::Get().Startup();
+    Engine::Get().PostStartup();
     
-    Window::Get().Startup();
-    Graphic::Get().Startup();
-    PSOManager::Get().Startup();
-    MeshManager::Get().Startup();
-
-
-    MeshManager::Get().PostInit();
-    Window::Get().Show();
     while (Window::Get().IsRunning())
     {
-        Window::Get().Update();
-        Graphic::Get().PreUpdate();
+        Engine::Get().PreUpdate();
 
         CommandList commandList(QueueType::Direct);
 
@@ -49,14 +37,10 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
 
         commandList.Submit();
 
-        Graphic::Get().PostUpdate();
+        Engine::Get().PostUpdate();
     }
 
-    Graphic::Get().GetCurrentFence()->Flush(QueueType::Direct);
-
-    MeshManager::Get().Shutdown();
-    PSOManager::Get().Shutdown();
-    Graphic::Get().Shutdown();
-    Window::Get().Shutdown();
+    Engine::Get().PreShutdown();
+    Engine::Get().Shutdown();
 
 }

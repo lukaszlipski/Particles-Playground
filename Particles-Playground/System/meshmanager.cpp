@@ -35,7 +35,7 @@ bool MeshManager::Shutdown()
     return true;
 }
 
-void MeshManager::PostInit()
+void MeshManager::PostStartup()
 {
     mCopyFence->Flush(QueueType::Direct);
 

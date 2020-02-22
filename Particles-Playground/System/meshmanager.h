@@ -43,7 +43,7 @@ public:
     bool Startup();
     bool Shutdown();
 
-    void PostInit();
+    void PostStartup();
 
     static MeshManager& Get()
     {

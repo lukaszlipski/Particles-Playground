@@ -51,7 +51,7 @@ void Window::Show()
     ShowWindow(mHandle, SW_SHOW);
 }
 
-void Window::Update()
+void Window::PreUpdate()
 {
     MSG msg;
     while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))

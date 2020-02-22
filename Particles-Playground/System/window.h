@@ -12,6 +12,8 @@ public:
     bool Startup();
     bool Shutdown();
 
+    void PreUpdate();
+
     static Window& Get()
     {
         static Window* instance = new Window();
@@ -20,7 +22,6 @@ public:
 
     void Close();
     void Show();
-    void Update();
 
     inline bool IsRunning() const { return mIsRunning; }
     inline HWND GetHandle() const { return mHandle; }
