@@ -1,4 +1,5 @@
 #pragma 
+#include "vertexformats.h"
 
 class CommandList;
 
@@ -17,6 +18,8 @@ enum class PipelineType
     Graphics = 0,
     Compute
 };
+
+using PSOKey = std::pair<PSOType, VertexFormatDescRef>;
 
 class PSOManager
 {
@@ -38,7 +41,7 @@ public:
         return *instance;
     }
 
-    void Bind(CommandList& cmdList, const PSOType type);
+    void Bind(CommandList& cmdList, const PSOKey key);
 
 private:
     explicit PSOManager() = default;
@@ -48,6 +51,7 @@ private:
 
     D3D_ROOT_SIGNATURE_VERSION mRootSigVer;
     std::map<RootSigType, ID3D12RootSignature*> mRootSigMap;
-    std::map<PSOType, ExtendedPSO> mPSOMap;
+    std::map<PSOKey, ExtendedPSO> mPSOMap;
 
 };
+

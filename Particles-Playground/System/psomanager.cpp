@@ -1,6 +1,5 @@
 #include "psomanager.h"
 #include "graphic.h"
-#include "vertexformats.h"
 #include "commandlist.h"
 
 const std::wstring SHADER_FOLDER = L"Shaders/";
@@ -39,9 +38,9 @@ bool PSOManager::Shutdown()
     return true;
 }
 
-void PSOManager::Bind(CommandList& cmdList, const PSOType type)
+void PSOManager::Bind(CommandList& cmdList, const PSOKey key)
 {
-    auto& [pso, rootSigType, pipelineType] = mPSOMap[type];
+    auto& [pso, rootSigType, pipelineType] = mPSOMap[key];
     assert(pso);
     ID3D12RootSignature* rootSig = mRootSigMap[rootSigType];
     assert(rootSig);
@@ -98,32 +97,38 @@ bool PSOManager::SetupDefaultPSO()
     D3DReadFileToBlob(vsShaderFileName.c_str(), &vertexShader);
     D3DReadFileToBlob(psShaderFileName.c_str(), &pixelShader);
 
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC info{};
-    info.pRootSignature = mRootSigMap[rootSig];
-    info.InputLayout = { DefaultVertexFormatDesc.data() , static_cast<uint32_t>(DefaultVertexFormatDesc.size()) };
-    info.VS = CD3DX12_SHADER_BYTECODE(vertexShader);
-    info.PS = CD3DX12_SHADER_BYTECODE(pixelShader);
-    //info.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-    info.NumRenderTargets = 1;
-    info.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-    info.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-    info.SampleMask = UINT_MAX;
-    info.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-    info.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-    info.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-    info.SampleDesc.Count = 1;
+    const std::vector<VertexFormatDescRef> vertexFormatDefs = { GetVertexFormatDesc<DefaultVertex>() };
 
-    ID3D12PipelineState* pso = nullptr;
-    if (FAILED(Graphic::Get().GetDevice()->CreateGraphicsPipelineState(&info, IID_PPV_ARGS(&pso))))
+    for (VertexFormatDescRef vertexFormatDef : vertexFormatDefs)
     {
+        D3D12_GRAPHICS_PIPELINE_STATE_DESC info{};
+        info.pRootSignature = mRootSigMap[rootSig];
+        info.InputLayout = { vertexFormatDef->data() , static_cast<uint32_t>(vertexFormatDef->size()) };
+        info.VS = CD3DX12_SHADER_BYTECODE(vertexShader);
+        info.PS = CD3DX12_SHADER_BYTECODE(pixelShader);
+        //info.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+        info.NumRenderTargets = 1;
+        info.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+        info.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+        info.SampleMask = UINT_MAX;
+        info.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        info.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+        info.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+        info.SampleDesc.Count = 1;
+
+        ID3D12PipelineState* pso = nullptr;
+        if (FAILED(Graphic::Get().GetDevice()->CreateGraphicsPipelineState(&info, IID_PPV_ARGS(&pso))))
+        {
+            if (vertexShader) { vertexShader->Release(); }
+            if (pixelShader) { pixelShader->Release(); }
+            return false;
+        }
+
         if (vertexShader) { vertexShader->Release(); }
         if (pixelShader) { pixelShader->Release(); }
-        return false;
+
+        PSOKey key = { PSOType::Default, vertexFormatDef };
+        mPSOMap[key] = { pso, rootSig, PipelineType::Graphics };
     }
-
-    if (vertexShader) { vertexShader->Release(); }
-    if (pixelShader) { pixelShader->Release(); }
-
-    mPSOMap[PSOType::Default] = { pso, rootSig, PipelineType::Graphics };
     return true;
 }

@@ -21,3 +21,4 @@ using namespace DirectX;
 #include <array>
 #include <vector>
 #include <map>
+#include <type_traits>

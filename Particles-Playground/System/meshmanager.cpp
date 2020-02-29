@@ -1,5 +1,4 @@
 #include "meshmanager.h"
-#include "vertexformats.h"
 #include "graphic.h"
 #include "commandlist.h"
 #include "fence.h"
@@ -61,6 +60,12 @@ void MeshManager::Draw(CommandList& cmdList, MeshType type, uint32_t instanceCou
     cmdList->DrawIndexedInstanced(mesh.Count, instanceCount, 0, 0, 0);
 }
 
+VertexFormatDescRef MeshManager::GetVertexFormatDescRef(MeshType type) const
+{
+    const MeshResource& mesh = mMeshes[static_cast<uint32_t>(type)];
+    return mesh.VertexFormat;
+}
+
 void MeshManager::CreateSquare(CommandList& copyCmdList, CommandList& postCopyCmdList)
 {
     DefaultVertex vertices[] =
@@ -78,6 +83,7 @@ void MeshManager::CreateSquare(CommandList& copyCmdList, CommandList& postCopyCm
     MeshResource& mesh = mMeshes[static_cast<uint32_t>(MeshType::Square)];
 
     mesh.Count = _countof(indices);
+    mesh.VertexFormat = GetVertexFormatDesc<std::remove_all_extents_t<decltype(vertices)>>();
 
     ID3D12Resource* vertexStageBuff = nullptr;
     ID3D12Resource* indexStageBuff = nullptr;

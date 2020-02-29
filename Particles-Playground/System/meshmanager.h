@@ -1,4 +1,5 @@
 #pragma once
+#include "vertexformats.h"
 
 class CommandList;
 class MeshManager;
@@ -20,6 +21,8 @@ struct MeshResource
     D3D_PRIMITIVE_TOPOLOGY Topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
     uint32_t Count = 0;
+
+    VertexFormatDescRef VertexFormat = nullptr;
 
 private:
     friend MeshManager;
@@ -53,6 +56,7 @@ public:
 
     void Bind(CommandList& cmdList, MeshType type) const;
     void Draw(CommandList& cmdList, MeshType type, uint32_t instanceCount = 1) const;
+    VertexFormatDescRef GetVertexFormatDescRef(MeshType type) const;
 
 private:
     explicit MeshManager() = default;

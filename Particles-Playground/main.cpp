@@ -17,7 +17,8 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
         FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
         commandList->ClearRenderTargetView(Graphic::Get().GetCurrentRenderTargetHandle(), clearColor, 0, nullptr);
 
-        PSOManager::Get().Bind(commandList, PSOType::Default);
+        const PSOKey key{ PSOType::Default, MeshManager::Get().GetVertexFormatDescRef(MeshType::Square) };
+        PSOManager::Get().Bind(commandList, key);
 
         commandList->OMSetRenderTargets(1, &Graphic::Get().GetCurrentRenderTargetHandle(), false, nullptr);
 
