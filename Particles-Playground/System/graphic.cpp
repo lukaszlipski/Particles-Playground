@@ -83,6 +83,11 @@ bool Graphic::Shutdown()
     return true;
 }
 
+void Graphic::PostStartup()
+{
+    Graphic::Get().GetCurrentFence()->Signal(QueueType::Direct);
+}
+
 void Graphic::PreUpdate()
 {
     Graphic::Get().GetCurrentFence()->WaitOnCPU();
@@ -102,6 +107,7 @@ void Graphic::PostUpdate()
     Graphic::Get().GetCurrentFence()->Signal(QueueType::Direct);
     mSwapChain->Present(1, 0);
     mCurrentFrameIdx = mSwapChain->GetCurrentBackBufferIndex();
+    ++mCurrentFrameNumber;
 }
 
 ID3D12CommandQueue* Graphic::GetQueue(QueueType type) const

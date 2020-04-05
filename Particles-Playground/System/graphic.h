@@ -26,6 +26,7 @@ public:
         return *instance;
     }
 
+    void PostStartup();
     void PreUpdate();
     void PostUpdate();
     ID3D12CommandQueue* GetQueue(QueueType type) const;
@@ -37,8 +38,8 @@ public:
     inline ID3D12CommandQueue* GetDirectQueue() const { return mDirectQueue; }
     inline ID3D12CommandQueue* GetComputeQueue() const { return mComputeQueue; }
     inline ID3D12CommandQueue* GetCopyQueue() const { return mCopyQueue; }
-    inline uint32_t GetFrameCount() const { return mFrameCount; }
     inline uint32_t GetCurrentFrameIndex() const { return mCurrentFrameIdx; }
+    inline uint64_t GetCurrentFrameNumber() const { return mCurrentFrameNumber; }
     inline uint32_t GetRTVHandleSize() const { return mRTVHandleSize; }
     inline uint32_t GetCBVHandleSize() const { return mCBVHandleSize; }
     inline ID3D12Resource* GetRenderTarget(uint32_t index) const { return mRenderTargets[index]; }
@@ -48,6 +49,7 @@ public:
     inline Fence* GetCurrentFence() { return mFences[GetCurrentFrameIndex()].get(); }
 
     static D3D12_COMMAND_LIST_TYPE GetCommandListType(QueueType type);
+    static constexpr uint32_t GetFrameCount() { return mFrameCount; }
 
 private:
     explicit Graphic() = default;
@@ -60,6 +62,7 @@ private:
     uint32_t mRTVHandleSize = 0;
     uint32_t mCBVHandleSize = 0;
     uint32_t mCurrentFrameIdx = 0;
+    uint64_t mCurrentFrameNumber = 0;
 
     ID3D12Debug* mDebugLayer = nullptr;
     IDXGIFactory4* mDXGIFactory = nullptr;

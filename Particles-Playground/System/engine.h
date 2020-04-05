@@ -4,6 +4,7 @@
 #include "psomanager.h"
 #include "meshmanager.h"
 #include "commandlist.h"
+#include "gpubuffer.h"
 
 class Engine
 {

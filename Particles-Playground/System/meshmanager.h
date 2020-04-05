@@ -3,6 +3,7 @@
 
 class CommandList;
 class MeshManager;
+class GPUBuffer;
 
 enum class MeshType
 {
@@ -12,8 +13,8 @@ enum class MeshType
 
 struct MeshResource
 {
-    ID3D12Resource* VertexBuffer = nullptr;
-    ID3D12Resource* IndexBuffer = nullptr;
+    std::unique_ptr<GPUBuffer> VertexBuffer;
+    std::unique_ptr<GPUBuffer> IndexBuffer;
 
     D3D12_VERTEX_BUFFER_VIEW VertexBufferView;
     D3D12_INDEX_BUFFER_VIEW IndexBufferView;
@@ -29,14 +30,16 @@ private:
 
     inline void Release()
     {
-        if (VertexBuffer) { VertexBuffer->Release(); }
-        if (IndexBuffer) { IndexBuffer->Release(); }
+        VertexBuffer.reset();
+        IndexBuffer.reset();
     }
 };
 
 class MeshManager
 {
 public:
+    ~MeshManager();
+
     MeshManager(const MeshManager&) = delete;
     MeshManager(MeshManager&&) = delete;
 
@@ -45,8 +48,6 @@ public:
 
     bool Startup();
     bool Shutdown();
-
-    void PostStartup();
 
     static MeshManager& Get()
     {
@@ -61,10 +62,8 @@ public:
 private:
     explicit MeshManager() = default;
 
-    void CreateSquare(CommandList& copyCmdList, CommandList& postCopyCmdList);
+    void CreateSquare(CommandList& cmdList);
 
-    std::unique_ptr<class Fence> mCopyFence;
     std::array<MeshResource, static_cast<uint32_t>(MeshType::Max)> mMeshes;
-    std::vector<ID3D12Resource*> mStageBuffers;
 
 };

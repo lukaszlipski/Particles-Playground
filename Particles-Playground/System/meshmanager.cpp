@@ -2,47 +2,30 @@
 #include "graphic.h"
 #include "commandlist.h"
 #include "fence.h"
+#include "gpubuffer.h"
+
+MeshManager::~MeshManager()
+{ }
 
 bool MeshManager::Startup()
 {
-    mCopyFence = std::make_unique<Fence>();
+    CommandList cmdList(QueueType::Direct);
 
-    CommandList copyCmdList(QueueType::Copy);
-    CommandList postCopyCmdList(QueueType::Direct);
+    CreateSquare(cmdList);
 
-    CreateSquare(copyCmdList, postCopyCmdList);
-
-    copyCmdList.Submit();
-
-    mCopyFence->Signal(QueueType::Copy);
-    mCopyFence->Wait(QueueType::Direct);
-
-    postCopyCmdList.Submit();
+    cmdList.Submit();
 
     return true;
 }
 
 bool MeshManager::Shutdown()
 {
-    mCopyFence.reset();
-
     for (MeshResource& mesh : mMeshes)
     {
         mesh.Release();
     }
 
     return true;
-}
-
-void MeshManager::PostStartup()
-{
-    mCopyFence->Flush(QueueType::Direct);
-
-    for (ID3D12Resource* resource : mStageBuffers)
-    {
-        resource->Release();
-    }
-    mStageBuffers.clear();
 }
 
 void MeshManager::Bind(CommandList& cmdList, MeshType type) const
@@ -66,7 +49,7 @@ VertexFormatDescRef MeshManager::GetVertexFormatDescRef(MeshType type) const
     return mesh.VertexFormat;
 }
 
-void MeshManager::CreateSquare(CommandList& copyCmdList, CommandList& postCopyCmdList)
+void MeshManager::CreateSquare(CommandList& cmdList)
 {
     DefaultVertex vertices[] =
     {
@@ -84,45 +67,30 @@ void MeshManager::CreateSquare(CommandList& copyCmdList, CommandList& postCopyCm
 
     mesh.Count = _countof(indices);
     mesh.VertexFormat = GetVertexFormatDesc<std::remove_all_extents_t<decltype(vertices)>>();
+    
+    const uint32_t verticesSize = sizeof(vertices);
+    const uint32_t indicesSize = sizeof(indices);
+    mesh.VertexBuffer = std::make_unique<GPUBuffer>(verticesSize, 1, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+    mesh.IndexBuffer = std::make_unique<GPUBuffer>(indicesSize, 1, D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
-    ID3D12Resource* vertexStageBuff = nullptr;
-    ID3D12Resource* indexStageBuff = nullptr;
+    uint8_t* data = nullptr;
 
     // Vertex buffer
-    Graphic::Get().GetDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(sizeof(vertices)), D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&mesh.VertexBuffer));
-    Graphic::Get().GetDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(sizeof(vertices)), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&vertexStageBuff));
+    data = mesh.VertexBuffer->Map(0, verticesSize);
+    memcpy(data, &vertices, verticesSize);
+    mesh.VertexBuffer->Unmap(cmdList);
 
-    mesh.VertexBufferView.BufferLocation = mesh.VertexBuffer->GetGPUVirtualAddress();
-    mesh.VertexBufferView.SizeInBytes = sizeof(vertices);
+    mesh.VertexBufferView.BufferLocation = mesh.VertexBuffer->GetGPUAddress();
+    mesh.VertexBufferView.SizeInBytes = verticesSize;
     mesh.VertexBufferView.StrideInBytes = sizeof(DefaultVertex);
 
     // Index buffer
-    Graphic::Get().GetDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(sizeof(indices)), D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&mesh.IndexBuffer));
-    Graphic::Get().GetDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(sizeof(indices)), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&indexStageBuff));
-
-    mesh.IndexBufferView.BufferLocation = mesh.IndexBuffer->GetGPUVirtualAddress();
+    data = mesh.IndexBuffer->Map(0, indicesSize);
+    memcpy(data, &indices, indicesSize);
+    mesh.IndexBuffer->Unmap(cmdList);
+    
+    mesh.IndexBufferView.BufferLocation = mesh.IndexBuffer->GetGPUAddress();
     mesh.IndexBufferView.Format = DXGI_FORMAT_R32_UINT;
-    mesh.IndexBufferView.SizeInBytes = sizeof(indices);
+    mesh.IndexBufferView.SizeInBytes = indicesSize;
 
-    // Copy
-    D3D12_SUBRESOURCE_DATA vertexData{};
-    vertexData.pData = vertices;
-    vertexData.RowPitch = sizeof(vertices);
-    vertexData.SlicePitch = vertexData.RowPitch;
-    UpdateSubresources<1>(copyCmdList.Get(), mesh.VertexBuffer, vertexStageBuff, 0, 0, 1, &vertexData);
-
-    D3D12_SUBRESOURCE_DATA indexData{};
-    indexData.pData = indices;
-    indexData.RowPitch = sizeof(indices);
-    indexData.SlicePitch = indexData.RowPitch;
-    UpdateSubresources<1>(copyCmdList.Get(), mesh.IndexBuffer, indexStageBuff, 0, 0, 1, &indexData);
-
-    // Post copy
-    std::array<CD3DX12_RESOURCE_BARRIER, 2> barriers;
-    barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(mesh.VertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-    barriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(mesh.IndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
-    postCopyCmdList->ResourceBarrier(2, barriers.data());
-
-    // Save stage buffers for later deletion
-    mStageBuffers.insert(mStageBuffers.end(), { vertexStageBuff, indexStageBuff });
 }

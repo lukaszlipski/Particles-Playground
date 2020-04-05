@@ -56,8 +56,16 @@ void PSOManager::Bind(CommandList& cmdList, const PSOKey key)
 
 bool PSOManager::SetupDefaultRootSig()
 {  
+    D3D12_DESCRIPTOR_RANGE1 range{};
+    range.BaseShaderRegister = 0;
+    range.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
+    range.NumDescriptors = 1;
+    range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+    range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+    range.RegisterSpace = 0;
+
     CD3DX12_ROOT_PARAMETER1 rootParams[2];
-    rootParams[0].InitAsConstants(1, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+    rootParams[0].InitAsDescriptorTable(1, &range, D3D12_SHADER_VISIBILITY_VERTEX);
     rootParams[1].InitAsConstants(1, 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 
     CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSigDesc{};
