@@ -35,8 +35,6 @@ bool GPUBufferUploadManager::Startup()
     res = device->CreatePlacedResource(mHeap, 0, &CD3DX12_RESOURCE_DESC::Buffer(UploadHeapSize), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mUploadRes));
     assert(SUCCEEDED(res));
 
-    mFreeList.push_back({ 0, UploadHeapSize });
-
     return true;
 }
 
@@ -55,73 +53,27 @@ void GPUBufferUploadManager::PreUpdate()
     for (Allocation& alloc : mAllocations)
     {
         // Merge not needed memory block
-        if (alloc.FrameNumber + frameCount >= currentFrameNum)
+        if (alloc.FrameNumber + frameCount <= currentFrameNum)
         {
-            const uint64_t start = alloc.Start;
-            const uint64_t size = alloc.Size;
-
-            auto left = std::find_if(mFreeList.begin(), mFreeList.end(), [start](const FreeBlock& block) {
-                return block.Start + block.Size == start;
-            });
-
-            auto right = std::find_if(mFreeList.rbegin(), mFreeList.rend(), [start, size](const FreeBlock& block) {
-                return block.Start == start + size;
-            });
-
-            if (left != mFreeList.end() && right == mFreeList.rend()) // we can merge only with left block
-            {
-                left->Size += size;
-            }
-            else if (left == mFreeList.end() && right != mFreeList.rend()) // we can merge only with right block
-            {
-                right->Start = start;
-            }
-            else if (left != mFreeList.end() && right != mFreeList.rend()) // we can merge from both sides
-            {
-                left->Size += size + right->Size;
-                mFreeList.erase((++right).base());
-            }
-            else if (left == mFreeList.end() && right == mFreeList.rend()) // we can't merge with any block
-            {
-                auto firstGreater = std::find_if(mFreeList.begin(), mFreeList.end(), [start](const FreeBlock& block) {
-                    return start > block.Start;
-                });
-
-                if (firstGreater != mFreeList.end())
-                {
-                    mFreeList.insert(firstGreater, { start,size });
-                }
-                else
-                {
-                    mFreeList.push_back({ start, size });
-                }
-            }
+            mAllocator.Free({ alloc.Start, alloc.Size });
         }
     }
 
     mAllocations.remove_if([currentFrameNum, frameCount](const Allocation& alloc) {
-        return alloc.FrameNumber + frameCount >= currentFrameNum;
+        return alloc.FrameNumber + frameCount <= currentFrameNum;
     });
 
 }
 
-GPUBufferUploadManager::Allocation GPUBufferUploadManager::FindMemoryBlock(uint32_t size)
+UploadBufferTemporaryRangeHandle GPUBufferUploadManager::Reserve(uint32_t size)
 {
-    auto firstBestFit = std::find_if(mFreeList.begin(), mFreeList.end(), [size](const FreeBlock& block) {
-        return block.Size >= size;
-    });
-    assert(firstBestFit != mFreeList.end()); // Cannot find a block which contains enough memory
+    ID3D12Device* const device = Graphic::Get().GetDevice();
 
-    const uint32_t currentFrameNum = Graphic::Get().GetCurrentFrameNumber();
-    mAllocations.push_back({ firstBestFit->Start, size, currentFrameNum });
+    Range alloc = mAllocator.Allocate(size);
+    assert(alloc.IsValid());
 
-    firstBestFit->Size -= size;
-    firstBestFit->Start += size;
+    const uint64_t currentFrameNum = Graphic::Get().GetCurrentFrameNumber();
+    mAllocations.push_back({ alloc.Start, alloc.Size, currentFrameNum });
 
-    if (firstBestFit->Size == 0)
-    {
-        mFreeList.erase(firstBestFit);
-    }
-
-    return mAllocations.back();
+    return std::make_unique<UploadBufferTemporaryRange>(alloc.Start, alloc.Start + alloc.Size);
 }

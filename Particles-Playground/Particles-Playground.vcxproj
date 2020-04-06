@@ -193,6 +193,8 @@
     <ClInclude Include="System\psomanager.h" />
     <ClInclude Include="System\vertexformats.h" />
     <ClInclude Include="System\window.h" />
+    <ClInclude Include="Utilities\freelistallocator.h" />
+    <ClInclude Include="Utilities\memory.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\Source\psdefault.hlsl">
@@ -210,6 +212,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Source\default.hlsli" />
+    <None Include="Utilities\freelistallocator.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

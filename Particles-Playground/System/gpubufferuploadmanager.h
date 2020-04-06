@@ -1,5 +1,6 @@
 #pragma once
 #include "graphic.h"
+#include "../Utilities/freelistallocator.h"
 
 class UploadBufferTemporaryRange
 {
@@ -29,17 +30,11 @@ class GPUBufferUploadManager
 {
     static const uint32_t UploadHeapSize = 1 * 1024 * 1024;
 
-    struct FreeBlock
-    {
-        uint64_t Start = 0;
-        uint64_t Size = 0;
-    };
-
     struct Allocation
     {
         uint64_t Start = 0;
         uint64_t Size = 0;
-        uint32_t FrameNumber = 0;
+        uint64_t FrameNumber = 0;
     };
 
 public:
@@ -54,14 +49,7 @@ public:
 
     void PreUpdate();
 
-    UploadBufferTemporaryRangeHandle Reserve(uint32_t size)
-    {
-        ID3D12Device* const device = Graphic::Get().GetDevice();
-
-        Allocation alloc = FindMemoryBlock(size);
-
-        return std::make_unique<UploadBufferTemporaryRange>(alloc.Start, alloc.Start + alloc.Size);
-    }
+    UploadBufferTemporaryRangeHandle Reserve(uint32_t size);
 
     inline ID3D12Resource* GetResource() const { return mUploadRes; }
 
@@ -72,14 +60,14 @@ public:
     }
 
 private:
-    explicit GPUBufferUploadManager() = default;
-
-    Allocation FindMemoryBlock(uint32_t size);
+    explicit GPUBufferUploadManager()
+        : mAllocator(0, UploadHeapSize)
+    {}
 
     ID3D12Heap* mHeap = nullptr;
     ID3D12Resource* mUploadRes = nullptr;
 
-    std::list<FreeBlock> mFreeList;
     std::list<Allocation> mAllocations;
+    FreeListAllocator<FirstFitStrategy> mAllocator;
 
 };
