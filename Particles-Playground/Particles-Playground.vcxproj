@@ -107,7 +107,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>Includes\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Includes\;.\</AdditionalIncludeDirectories>
       <EnableModules>false</EnableModules>
     </ClCompile>
     <Link>
@@ -148,7 +148,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
-      <AdditionalIncludeDirectories>Includes\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Includes\;.\</AdditionalIncludeDirectories>
       <EnableModules>false</EnableModules>
     </ClCompile>
     <Link>
@@ -171,6 +171,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="System\commandlist.cpp" />
+    <ClCompile Include="System\cpudescriptorheap.cpp" />
     <ClCompile Include="System\engine.cpp" />
     <ClCompile Include="System\fence.cpp" />
     <ClCompile Include="System\gpubuffer.cpp" />
@@ -184,6 +185,7 @@
     <ClInclude Include="Includes\d3dx12.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="System\commandlist.h" />
+    <ClInclude Include="System\cpudescriptorheap.h" />
     <ClInclude Include="System\engine.h" />
     <ClInclude Include="System\fence.h" />
     <ClInclude Include="System\gpubuffer.h" />

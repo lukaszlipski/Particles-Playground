@@ -1,10 +1,12 @@
 #pragma once
-#include "window.h"
-#include "graphic.h"
-#include "psomanager.h"
-#include "meshmanager.h"
-#include "commandlist.h"
-#include "gpubuffer.h"
+#include "System/window.h"
+#include "System/graphic.h"
+#include "System/psomanager.h"
+#include "System/meshmanager.h"
+#include "System/commandlist.h"
+#include "System/gpubuffer.h"
+#include "System/cpudescriptorheap.h"
+#include "Utilities/memory.h"
 
 class Engine
 {

@@ -6,11 +6,11 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
    
     uint32_t constantBufferCount = Graphic::Get().GetFrameCount();
     uint32_t constantBufferSize = (16 + 16) * sizeof(float);
-    constantBufferSize = (constantBufferSize + 256) & ~255;
+    constantBufferSize = AlignPow2(constantBufferSize, 256U);
 
     std::unique_ptr<GPUBuffer> constantBuffer = std::make_unique<GPUBuffer>(constantBufferSize, constantBufferCount);
 
-    // Create descriptor heap
+    // Create descriptor heaps
     ID3D12DescriptorHeap* heap = nullptr;
 
     D3D12_DESCRIPTOR_HEAP_DESC desc{};
@@ -19,19 +19,17 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     Graphic::Get().GetDevice()->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&heap));
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(heap->GetCPUDescriptorHandleForHeapStart());
+    // Create constant buffer view in cpu descriptor heap
+    CPUDescriptorHandle cpuHandle = Graphic::Get().GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Allocate();
+    D3D12_CONSTANT_BUFFER_VIEW_DESC buffDesc{};
+    buffDesc.BufferLocation = constantBuffer->GetGPUAddress();
+    buffDesc.SizeInBytes = constantBufferSize;
+    Graphic::Get().GetDevice()->CreateConstantBufferView(&buffDesc, cpuHandle);
 
-    // Create frames' constant buffer views
-    for (uint32_t i = 0; i < constantBufferCount; ++i)
-    {
-        D3D12_CONSTANT_BUFFER_VIEW_DESC buffDesc{};
-        buffDesc.BufferLocation = constantBuffer->GetGPUAddress(i);
-        buffDesc.SizeInBytes = constantBufferSize;
+    // Copy from cpu desc handle to gpu visible descriptor heap
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dynamicHandle(heap->GetCPUDescriptorHandleForHeapStart());
 
-        Graphic::Get().GetDevice()->CreateConstantBufferView(&buffDesc, cpuHandle);
-
-        cpuHandle.Offset(1, Graphic::Get().GetCBVHandleSize());
-    }
+    Graphic::Get().GetDevice()->CopyDescriptorsSimple(1, dynamicHandle, cpuHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
     // Prepare a camera projection
     const float fov = XMConvertToRadians(90.0f);
@@ -47,7 +45,6 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
         Engine::Get().PreUpdate();
 
         // Record commands
-        uint32_t currentFrame = Graphic::Get().GetCurrentFrameIndex();
         CommandList commandList(QueueType::Direct);
 
         // Update camera constant buffer
@@ -58,10 +55,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
             const XMVECTOR camUp = { 0, 1, 0,0 };
             const XMMATRIX view = XMMatrixLookAtLH(camPos, camPos + camDir, camUp);
 
-            const uint32_t startOffset = constantBufferSize * currentFrame;
-            const uint32_t endOffset = startOffset + constantBufferSize - 1;
-            
-            uint8_t* dstData = constantBuffer->Map(startOffset, endOffset);
+            uint8_t* dstData = constantBuffer->Map(0, 256);
 
             memcpy(dstData, &proj, 16 * sizeof(float));
             memcpy(dstData + (16 * sizeof(float)), &view, 16 * sizeof(float));
@@ -84,7 +78,6 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
 
         commandList->SetDescriptorHeaps(1, &heap);
         CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(heap->GetGPUDescriptorHandleForHeapStart());
-        gpuHandle.Offset(currentFrame, Graphic::Get().GetCBVHandleSize());
         commandList->SetGraphicsRootDescriptorTable(0, gpuHandle);
 
         const float green = 0.5f;

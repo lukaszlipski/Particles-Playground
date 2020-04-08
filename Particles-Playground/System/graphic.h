@@ -1,6 +1,8 @@
 #pragma once
 #include "fence.h"
 
+class CPUDescriptorHeap;
+
 enum class QueueType
 {
     Direct = 0,
@@ -11,6 +13,8 @@ enum class QueueType
 class Graphic
 {
 public:
+    ~Graphic();
+
     Graphic(const Graphic&) = delete;
     Graphic(Graphic&&) = delete;
 
@@ -34,6 +38,8 @@ public:
     ID3D12CommandAllocator* GetCurrentCommandAllocator(QueueType type) const;
     CD3DX12_CPU_DESCRIPTOR_HANDLE GetCurrentRenderTargetHandle();
 
+    CPUDescriptorHeap* GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type);
+
     inline ID3D12Device* GetDevice() const { return mDevice; }
     inline ID3D12CommandQueue* GetDirectQueue() const { return mDirectQueue; }
     inline ID3D12CommandQueue* GetComputeQueue() const { return mComputeQueue; }
@@ -52,7 +58,7 @@ public:
     static constexpr uint32_t GetFrameCount() { return mFrameCount; }
 
 private:
-    explicit Graphic() = default;
+    explicit Graphic();
 
     bool EnableDebugLayer();
     bool FindBestAdapter();
@@ -73,6 +79,8 @@ private:
     ID3D12CommandQueue* mDirectQueue = nullptr;
     ID3D12CommandQueue* mComputeQueue = nullptr;
     ID3D12CommandQueue* mCopyQueue = nullptr;
+
+    std::unique_ptr<CPUDescriptorHeap> mCPUDescriptorHeapCBV;
 
     std::array<ID3D12CommandAllocator*, mFrameCount> mDirectCommandAllocator;
     std::array<ID3D12CommandAllocator*, mFrameCount> mComputeCommandAllocator;

@@ -48,6 +48,9 @@
     <ClCompile Include="System\gpubufferuploadmanager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="System\cpudescriptorheap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -90,6 +93,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Utilities\memory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="System\cpudescriptorheap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

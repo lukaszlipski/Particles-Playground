@@ -1,5 +1,9 @@
 #include "graphic.h"
 #include "window.h"
+#include "cpudescriptorheap.h"
+
+Graphic::~Graphic() = default;
+Graphic::Graphic() = default;
 
 bool Graphic::Startup()
 {
@@ -53,6 +57,8 @@ bool Graphic::Startup()
     const HWND handle = Window::Get().GetHandle();
     mDXGIFactory->MakeWindowAssociation(handle, DXGI_MWA_NO_ALT_ENTER);
 
+    mCPUDescriptorHeapCBV = std::make_unique<CPUDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
     return true;
 }
 
@@ -72,6 +78,8 @@ bool Graphic::Shutdown()
     {
         if (renderTarget) { renderTarget->Release(); }
     }
+
+    if (mCPUDescriptorHeapCBV) { mCPUDescriptorHeapCBV.reset(); }
 
     if (mSwapChainDescHeap) { mSwapChainDescHeap->Release(); }
     if (mSwapChain) { mSwapChain->Release(); }
@@ -148,6 +156,18 @@ ID3D12CommandAllocator* Graphic::GetCurrentCommandAllocator(QueueType type) cons
 CD3DX12_CPU_DESCRIPTOR_HANDLE Graphic::GetCurrentRenderTargetHandle()
 {
     return CD3DX12_CPU_DESCRIPTOR_HANDLE(mSwapChainDescHeap->GetCPUDescriptorHandleForHeapStart(), GetCurrentFrameIndex(), GetRTVHandleSize());
+}
+
+CPUDescriptorHeap* Graphic::GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type)
+{
+    switch (type)
+    {
+    case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV:
+        return mCPUDescriptorHeapCBV.get();
+    default:
+        assert(false);
+    }
+    return nullptr;
 }
 
 D3D12_COMMAND_LIST_TYPE Graphic::GetCommandListType(QueueType type)
