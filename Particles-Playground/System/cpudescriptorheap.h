@@ -8,21 +8,16 @@ public:
         : mAllocation(allocation), mHandle(handle)
     { }
 
-    inline Range GetAllocation() const { return mAllocation; }
+    inline Range& GetAllocation() { return mAllocation; }
     inline D3D12_CPU_DESCRIPTOR_HANDLE GetHandle() const { return mHandle; }
-    inline bool IsValid() const { return mValid; }
-    inline void Invalidate() 
-    { 
-        mValid = false; 
-        mAllocation = Range{};
-    }
+    inline bool IsValid() const { return mAllocation.IsValid(); }
 
     operator D3D12_CPU_DESCRIPTOR_HANDLE() const { return mHandle; }
 
 private:
     Range mAllocation;
     D3D12_CPU_DESCRIPTOR_HANDLE mHandle;
-    bool mValid = true;
+
 };
 
 class CPUDescriptorHeap

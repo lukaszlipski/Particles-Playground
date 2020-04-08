@@ -50,7 +50,6 @@ void CPUDescriptorHeap::Free(CPUDescriptorHandle& handle)
     if (!handle.IsValid()) { return; }
 
     mAllocator.Free(handle.GetAllocation());
-    handle.Invalidate();
 }
 
 uint32_t CPUDescriptorHeap::GetHandleSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const

@@ -42,6 +42,12 @@ bool GPUBufferUploadManager::Shutdown()
 {
     if (mHeap) { mHeap->Release(); }
     if (mUploadRes) { mUploadRes->Release(); }
+
+    for (Allocation& alloc : mAllocations)
+    {
+        mAllocator.Free(alloc.AllocationRange);
+    }
+
     return true;
 }
 
@@ -55,7 +61,7 @@ void GPUBufferUploadManager::PreUpdate()
         // Merge not needed memory block
         if (alloc.FrameNumber + frameCount <= currentFrameNum)
         {
-            mAllocator.Free({ alloc.Start, alloc.Size });
+            mAllocator.Free(alloc.AllocationRange);
         }
     }
 

@@ -1,6 +1,8 @@
 template<typename AllocStrategy>
-void FreeListAllocator<AllocStrategy>::Free(Range range)
+void FreeListAllocator<AllocStrategy>::Free(Range& range)
 {
+    if (!range.IsValid()) { return; }
+
     const uint64_t start = range.Start;
     const uint64_t size = range.Size;
 
@@ -41,6 +43,9 @@ void FreeListAllocator<AllocStrategy>::Free(Range range)
             mFreeList.push_front({ start, size });
         }
     }
+
+    --mAllocationNum;
+    range.Invalidate();
 }
 
 template<typename AllocStrategy>
@@ -55,6 +60,8 @@ Range FreeListAllocator<AllocStrategy>::Allocate(uint32_t size, uint32_t alignme
         return result;
     }
 
+    // #TODO(llipski): return range with a properly align start
+
     result.Start = freeBlock->Start;
     result.Size = size;
 
@@ -66,5 +73,6 @@ Range FreeListAllocator<AllocStrategy>::Allocate(uint32_t size, uint32_t alignme
         mFreeList.erase(freeBlock);
     }
 
+    ++mAllocationNum;
     return result;
 }

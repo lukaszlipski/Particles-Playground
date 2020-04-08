@@ -98,6 +98,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
 
     Engine::Get().PreShutdown();
 
+    Graphic::Get().GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Free(cpuHandle);
     heap->Release();
     constantBuffer.reset();
 

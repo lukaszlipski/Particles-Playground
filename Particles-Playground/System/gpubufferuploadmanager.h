@@ -32,8 +32,7 @@ class GPUBufferUploadManager
 
     struct Allocation
     {
-        uint64_t Start = 0;
-        uint64_t Size = 0;
+        Range AllocationRange;
         uint64_t FrameNumber = 0;
     };
 

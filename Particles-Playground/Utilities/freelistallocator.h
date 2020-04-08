@@ -1,17 +1,6 @@
 #pragma once
 #include "memory.h"
-
-struct Range
-{
-    static const uint64_t Invalid = std::numeric_limits<uint64_t>::max();
-
-    uint64_t Start = Invalid;
-    uint64_t Size = Invalid;
-
-    bool IsValid() const {
-        return Start != Invalid && Size != Invalid;
-    }
-};
+#include "allocatorcommon.h"
 
 struct FirstFitStrategy
 {
@@ -27,26 +16,22 @@ struct FirstFitStrategy
 };
 
 template<typename AllocStrategy>
-class FreeListAllocator
+class FreeListAllocator : public BaseAllocator
 {
 public:
     FreeListAllocator(uint64_t startRange, uint64_t endRange)
-        : mStartRange(startRange), mEndRange(endRange)
+        : BaseAllocator(startRange, endRange)
     {
         mFreeList.push_back({ mStartRange, mEndRange });
     }
 
     ~FreeListAllocator() = default;
 
-    Range Allocate(uint32_t size, uint32_t alignment = 1);
-
-    void Free(Range range);
+    virtual Range Allocate(uint32_t size, uint32_t alignment = 1) override;
+    virtual void Free(Range& range) override;
 
 private:
-
     std::list<Range> mFreeList;
-    uint64_t mStartRange = 0;
-    uint64_t mEndRange = 0;
 
 };
 
