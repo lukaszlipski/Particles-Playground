@@ -2,6 +2,7 @@
 #include "fence.h"
 
 class CPUDescriptorHeap;
+class GPUDescriptorHeap;
 
 enum class QueueType
 {
@@ -37,8 +38,10 @@ public:
     ID3D12CommandAllocator* GetCommandAllocator(QueueType type, uint32_t index) const;
     ID3D12CommandAllocator* GetCurrentCommandAllocator(QueueType type) const;
     CD3DX12_CPU_DESCRIPTOR_HANDLE GetCurrentRenderTargetHandle();
+    uint32_t GetHandleSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const;
 
     CPUDescriptorHeap* GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type);
+    GPUDescriptorHeap* GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type);
 
     inline ID3D12Device* GetDevice() const { return mDevice; }
     inline ID3D12CommandQueue* GetDirectQueue() const { return mDirectQueue; }
@@ -81,6 +84,7 @@ private:
     ID3D12CommandQueue* mCopyQueue = nullptr;
 
     std::unique_ptr<CPUDescriptorHeap> mCPUDescriptorHeapCBV;
+    std::unique_ptr<GPUDescriptorHeap> mGPUDescriptorHeapCBV;
 
     std::array<ID3D12CommandAllocator*, mFrameCount> mDirectCommandAllocator;
     std::array<ID3D12CommandAllocator*, mFrameCount> mComputeCommandAllocator;

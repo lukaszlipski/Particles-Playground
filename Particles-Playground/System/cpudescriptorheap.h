@@ -39,8 +39,6 @@ public:
     void Free(CPUDescriptorHandle& handle);
 
 private:
-    uint32_t GetHandleSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const;
-
     ID3D12DescriptorHeap* mHeap = nullptr;
     FreeListAllocator<FirstFitStrategy> mAllocator;
     D3D12_DESCRIPTOR_HEAP_TYPE mType;

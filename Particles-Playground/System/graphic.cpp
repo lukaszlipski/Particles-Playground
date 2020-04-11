@@ -1,6 +1,7 @@
 #include "graphic.h"
 #include "window.h"
 #include "cpudescriptorheap.h"
+#include "gpudescriptorheap.h"
 
 Graphic::~Graphic() = default;
 Graphic::Graphic() = default;
@@ -59,6 +60,8 @@ bool Graphic::Startup()
 
     mCPUDescriptorHeapCBV = std::make_unique<CPUDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+    mGPUDescriptorHeapCBV = std::make_unique<GPUDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
     return true;
 }
 
@@ -80,6 +83,8 @@ bool Graphic::Shutdown()
     }
 
     if (mCPUDescriptorHeapCBV) { mCPUDescriptorHeapCBV.reset(); }
+
+    if (mGPUDescriptorHeapCBV) { mGPUDescriptorHeapCBV.reset(); }
 
     if (mSwapChainDescHeap) { mSwapChainDescHeap->Release(); }
     if (mSwapChain) { mSwapChain->Release(); }
@@ -108,6 +113,8 @@ void Graphic::PreUpdate()
 
     allocator = Graphic::Get().GetCurrentCommandAllocator(QueueType::Direct);
     allocator->Reset();
+
+    mGPUDescriptorHeapCBV->ReleaseUnusedDescriptorHandles();
 }
 
 void Graphic::PostUpdate()
@@ -158,12 +165,35 @@ CD3DX12_CPU_DESCRIPTOR_HANDLE Graphic::GetCurrentRenderTargetHandle()
     return CD3DX12_CPU_DESCRIPTOR_HANDLE(mSwapChainDescHeap->GetCPUDescriptorHandleForHeapStart(), GetCurrentFrameIndex(), GetRTVHandleSize());
 }
 
+uint32_t Graphic::GetHandleSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const
+{
+    switch (type)
+    {
+    case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV:
+        return Graphic::Get().GetCBVHandleSize();
+    default:
+        return Graphic::Get().GetRTVHandleSize();
+    }
+}
+
 CPUDescriptorHeap* Graphic::GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type)
 {
     switch (type)
     {
     case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV:
         return mCPUDescriptorHeapCBV.get();
+    default:
+        assert(false);
+    }
+    return nullptr;
+}
+
+GPUDescriptorHeap* Graphic::GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type)
+{
+    switch (type)
+    {
+    case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV:
+        return mGPUDescriptorHeapCBV.get();
     default:
         assert(false);
     }

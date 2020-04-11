@@ -176,6 +176,7 @@
     <ClCompile Include="System\fence.cpp" />
     <ClCompile Include="System\gpubuffer.cpp" />
     <ClCompile Include="System\gpubufferuploadmanager.cpp" />
+    <ClCompile Include="System\gpudescriptorheap.cpp" />
     <ClCompile Include="System\graphic.cpp" />
     <ClCompile Include="System\meshmanager.cpp" />
     <ClCompile Include="System\psomanager.cpp" />
@@ -192,6 +193,7 @@
     <ClInclude Include="System\fence.h" />
     <ClInclude Include="System\gpubuffer.h" />
     <ClInclude Include="System\gpubufferuploadmanager.h" />
+    <ClInclude Include="System\gpudescriptorheap.h" />
     <ClInclude Include="System\graphic.h" />
     <ClInclude Include="System\meshmanager.h" />
     <ClInclude Include="System\psomanager.h" />

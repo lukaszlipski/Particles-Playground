@@ -41,7 +41,7 @@ CPUDescriptorHandle CPUDescriptorHeap::Allocate()
     Range alloc = mAllocator.Allocate(1);
     assert(alloc.IsValid());
 
-    CD3DX12_CPU_DESCRIPTOR_HANDLE handle(mHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<uint32_t>(alloc.Start), GetHandleSize(mType));
+    CD3DX12_CPU_DESCRIPTOR_HANDLE handle(mHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<uint32_t>(alloc.Start), Graphic::Get().GetHandleSize(mType));
     return CPUDescriptorHandle(alloc, handle);
 }
 
@@ -50,15 +50,4 @@ void CPUDescriptorHeap::Free(CPUDescriptorHandle& handle)
     if (!handle.IsValid()) { return; }
 
     mAllocator.Free(handle.GetAllocation());
-}
-
-uint32_t CPUDescriptorHeap::GetHandleSize(D3D12_DESCRIPTOR_HEAP_TYPE type) const
-{
-    switch (type)
-    {
-    case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV:
-        return Graphic::Get().GetCBVHandleSize();
-    default:
-        return Graphic::Get().GetRTVHandleSize();
-    }
 }

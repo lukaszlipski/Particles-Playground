@@ -6,6 +6,7 @@
 #include "System/commandlist.h"
 #include "System/gpubuffer.h"
 #include "System/cpudescriptorheap.h"
+#include "System/gpudescriptorheap.h"
 #include "Utilities/memory.h"
 
 class Engine

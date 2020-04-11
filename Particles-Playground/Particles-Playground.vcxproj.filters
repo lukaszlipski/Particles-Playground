@@ -57,6 +57,9 @@
     <ClCompile Include="Utilities\circularallocator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="System\gpudescriptorheap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -111,6 +114,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Utilities\circularallocator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="System\gpudescriptorheap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
