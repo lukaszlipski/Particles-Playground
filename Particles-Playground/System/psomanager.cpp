@@ -64,9 +64,18 @@ bool PSOManager::SetupDefaultRootSig()
     range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
     range.RegisterSpace = 0;
 
-    CD3DX12_ROOT_PARAMETER1 rootParams[2];
+    D3D12_DESCRIPTOR_RANGE1 rangeSRV{};
+    rangeSRV.BaseShaderRegister = 0;
+    rangeSRV.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
+    rangeSRV.NumDescriptors = 1;
+    rangeSRV.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+    rangeSRV.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+    rangeSRV.RegisterSpace = 0;
+
+    CD3DX12_ROOT_PARAMETER1 rootParams[3];
     rootParams[0].InitAsDescriptorTable(1, &range, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParams[1].InitAsConstants(1, 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParams[1].InitAsDescriptorTable(1, &rangeSRV, D3D12_SHADER_VISIBILITY_VERTEX);
+    rootParams[2].InitAsConstants(1, 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
 
     CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSigDesc{};
     rootSigDesc.Init_1_1(_countof(rootParams), rootParams, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS | D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS | D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS);
@@ -120,7 +129,21 @@ bool PSOManager::SetupDefaultPSO()
         info.DSVFormat = DXGI_FORMAT_D32_FLOAT;
         info.SampleMask = UINT_MAX;
         info.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-        info.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+        //info.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+
+        D3D12_BLEND_DESC alphaBlend = {}; // temporary blend state for default
+        alphaBlend.IndependentBlendEnable = FALSE;
+        alphaBlend.RenderTarget[0].BlendEnable = TRUE;
+        alphaBlend.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+        alphaBlend.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+        alphaBlend.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+        alphaBlend.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+        alphaBlend.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_INV_SRC_ALPHA;
+        alphaBlend.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+        alphaBlend.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
+        info.BlendState = alphaBlend;
+
         info.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
         info.SampleDesc.Count = 1;
 

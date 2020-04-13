@@ -70,8 +70,8 @@ void MeshManager::CreateSquare(CommandList& cmdList)
     
     const uint32_t verticesSize = sizeof(vertices);
     const uint32_t indicesSize = sizeof(indices);
-    mesh.VertexBuffer = std::make_unique<GPUBuffer>(verticesSize, 1, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-    mesh.IndexBuffer = std::make_unique<GPUBuffer>(indicesSize, 1, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+    mesh.VertexBuffer = std::make_unique<GPUBuffer>(verticesSize, 1, BufferUsage::Vertex);
+    mesh.IndexBuffer = std::make_unique<GPUBuffer>(indicesSize, 1, BufferUsage::Index);
 
     uint8_t* data = nullptr;
 
