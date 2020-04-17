@@ -26,6 +26,7 @@ void Engine::PreUpdate()
 void Engine::PostUpdate()
 {
     Graphic::Get().PostUpdate();
+    mTimer.PostUpdate();
 }
 
 void Engine::PreShutdown()

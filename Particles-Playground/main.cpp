@@ -66,6 +66,9 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     {
         Engine::Get().PreUpdate();
 
+        GlobalTimer& timer = Engine::Get().GetTimer();
+        OutputDebugMessage("Elapsed: %f, Delta: %f\n", timer.GetElapsedTime(), timer.GetDeltaTime());
+
         // Update particles' data
         const float tmp = XMScalarCos(Graphic::Get().GetCurrentFrameNumber() / 100.0f) / 1000.0f;
         for (ParticleData& x : data)

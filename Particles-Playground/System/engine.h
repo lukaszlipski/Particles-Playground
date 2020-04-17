@@ -7,8 +7,10 @@
 #include "System/gpubuffer.h"
 #include "System/cpudescriptorheap.h"
 #include "System/gpudescriptorheap.h"
+#include "System/globaltimer.h"
 #include "Graphics/camera.h"
 #include "Utilities/memory.h"
+#include "Utilities/debug.h"
 
 class Engine
 {
@@ -34,7 +36,11 @@ public:
         return *instance;
     }
 
+    inline GlobalTimer& GetTimer() { return mTimer; }
+
 private:
     explicit Engine() = default;
+
+    GlobalTimer mTimer;
 
 };

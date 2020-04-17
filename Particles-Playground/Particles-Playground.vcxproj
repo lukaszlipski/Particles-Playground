@@ -175,6 +175,7 @@
     <ClCompile Include="System\cpudescriptorheap.cpp" />
     <ClCompile Include="System\engine.cpp" />
     <ClCompile Include="System\fence.cpp" />
+    <ClCompile Include="System\globaltimer.cpp" />
     <ClCompile Include="System\gpubuffer.cpp" />
     <ClCompile Include="System\gpubufferuploadmanager.cpp" />
     <ClCompile Include="System\gpudescriptorheap.cpp" />
@@ -193,6 +194,7 @@
     <ClInclude Include="System\cpudescriptorheap.h" />
     <ClInclude Include="System\engine.h" />
     <ClInclude Include="System\fence.h" />
+    <ClInclude Include="System\globaltimer.h" />
     <ClInclude Include="System\gpubuffer.h" />
     <ClInclude Include="System\gpubufferuploadmanager.h" />
     <ClInclude Include="System\gpudescriptorheap.h" />
@@ -203,6 +205,7 @@
     <ClInclude Include="System\window.h" />
     <ClInclude Include="Utilities\allocatorcommon.h" />
     <ClInclude Include="Utilities\circularallocator.h" />
+    <ClInclude Include="Utilities\debug.h" />
     <ClInclude Include="Utilities\freelistallocator.h" />
     <ClInclude Include="Utilities\linearallocator.h" />
     <ClInclude Include="Utilities\memory.h" />
