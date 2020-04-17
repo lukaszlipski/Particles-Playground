@@ -24,3 +24,5 @@ using namespace DirectX;
 #include <type_traits>
 #include <random>
 #include <chrono>
+#include <variant>
+#include <algorithm>

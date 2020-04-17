@@ -67,10 +67,10 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
         Engine::Get().PreUpdate();
 
         GlobalTimer& timer = Engine::Get().GetTimer();
-        OutputDebugMessage("Elapsed: %f, Delta: %f\n", timer.GetElapsedTime(), timer.GetDeltaTime());
+        //OutputDebugMessage("Elapsed: %f, Delta: %f\n", timer.GetElapsedTime(), timer.GetDeltaTime());
 
         // Update particles' data
-        const float tmp = XMScalarCos(Graphic::Get().GetCurrentFrameNumber() / 100.0f) / 1000.0f;
+        const float tmp = XMScalarCos(timer.GetElapsedTime()) / 1000.0f;
         for (ParticleData& x : data)
         {
             x.Radius += tmp;
@@ -100,19 +100,14 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
 
             MeshManager::Get().Bind(commandList, MeshType::Square);
 
-            GPUDescriptorHandleScoped gpuHandle = Graphic::Get().GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Allocate();
-            GPUDescriptorHandleScoped gpuHandleSRV = Graphic::Get().GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Allocate();
-            Graphic::Get().GetDevice()->CopyDescriptorsSimple(1, gpuHandle, constantBuffer->GetCBV(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-            Graphic::Get().GetDevice()->CopyDescriptorsSimple(1, gpuHandleSRV, srvBuffer->GetSRV(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
             std::array<ID3D12DescriptorHeap*, 1> descHeaps = { Graphic::Get().GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->GetHeap() };
             commandList->SetDescriptorHeaps(static_cast<uint32_t>(descHeaps.size()), descHeaps.data());
 
-            commandList->SetGraphicsRootDescriptorTable(0, gpuHandle);
-            commandList->SetGraphicsRootDescriptorTable(1, gpuHandleSRV);
-
-            const float green = 0.5f;
-            commandList->SetGraphicsRoot32BitConstants(2, 1, &green, 0);
+            ShaderParameters params;
+            params.SetCBV(0, *constantBuffer);
+            params.SetSRV(1, *srvBuffer);
+            params.SetConstant(2, 0.5f);
+            params.Bind(commandList);
 
             commandList->RSSetViewports(1, &CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(Window::Get().GetWidth()), static_cast<float>(Window::Get().GetHeight())));
             commandList->RSSetScissorRects(1, &CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX));

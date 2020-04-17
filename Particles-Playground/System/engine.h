@@ -8,6 +8,7 @@
 #include "System/cpudescriptorheap.h"
 #include "System/gpudescriptorheap.h"
 #include "System/globaltimer.h"
+#include "System/shaderparameters.h"
 #include "Graphics/camera.h"
 #include "Utilities/memory.h"
 #include "Utilities/debug.h"

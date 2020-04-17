@@ -182,6 +182,7 @@
     <ClCompile Include="System\graphic.cpp" />
     <ClCompile Include="System\meshmanager.cpp" />
     <ClCompile Include="System\psomanager.cpp" />
+    <ClCompile Include="System\shaderparameters.cpp" />
     <ClCompile Include="System\window.cpp" />
     <ClCompile Include="Utilities\circularallocator.cpp" />
     <ClCompile Include="Utilities\linearallocator.cpp" />
@@ -201,6 +202,7 @@
     <ClInclude Include="System\graphic.h" />
     <ClInclude Include="System\meshmanager.h" />
     <ClInclude Include="System\psomanager.h" />
+    <ClInclude Include="System\shaderparameters.h" />
     <ClInclude Include="System\vertexformats.h" />
     <ClInclude Include="System\window.h" />
     <ClInclude Include="Utilities\allocatorcommon.h" />

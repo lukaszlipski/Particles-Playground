@@ -66,6 +66,9 @@
     <ClCompile Include="System\globaltimer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="System\shaderparameters.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -132,6 +135,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Utilities\debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="System\shaderparameters.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
