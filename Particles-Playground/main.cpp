@@ -10,25 +10,24 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
 
     std::unique_ptr<GPUBuffer> constantBuffer = std::make_unique<GPUBuffer>(constantBufferSize, constantBufferCount, BufferUsage::Constant);
 
-    // Prepare a camera matricies
+    // Prepare a camera
+    Camera camera({ 0, 0,-3,1 }, { 0, 0, 1,0 });
     {
         CommandList commandList(QueueType::Direct);
 
-        const float fov = XMConvertToRadians(90.0f);
-        const float ratio = Window::Get().GetWidth() / static_cast<float>(Window::Get().GetHeight());
-        const float nearDist = 1.0f;
-        const float farDist = 100.0f;
-        const XMMATRIX proj = XMMatrixPerspectiveFovLH(fov, ratio, nearDist, farDist);
+        struct VSContants
+        {
+            XMMATRIX Projection;
+            XMMATRIX View;
+        };
 
-        const XMVECTOR camPos = { 0, 0,-3,1 };
-        const XMVECTOR camDir = { 0, 0, 1,0 };
-        const XMVECTOR camUp = { 0, 1, 0,0 };
-        const XMMATRIX view = XMMatrixLookAtLH(camPos, camPos + camDir, camUp);
+        VSContants data;
+        data.Projection = camera.GetProjection();
+        data.View = camera.GetView();
 
         uint8_t* dstData = constantBuffer->Map();
 
-        memcpy(dstData, &proj, 16 * sizeof(float));
-        memcpy(dstData + (16 * sizeof(float)), &view, 16 * sizeof(float));
+        memcpy(dstData, &data, sizeof(VSContants));
 
         constantBuffer->Unmap(commandList);
 

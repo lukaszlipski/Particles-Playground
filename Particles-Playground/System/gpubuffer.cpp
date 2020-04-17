@@ -10,7 +10,7 @@ GPUBuffer& GPUBuffer::operator=(GPUBuffer&& rhs)
 
     mNumElems = rhs.mNumElems;
     mElemSize = rhs.mElemSize;
-    mCurrentResourceState = rhs.mCurrentResourceState;
+    mCurrentUsage = rhs.mCurrentUsage;
     mUsage = rhs.mUsage;
     mCBVHandle = std::move(rhs.mCBVHandle);
     mSRVHandle = std::move(rhs.mSRVHandle);
@@ -27,18 +27,18 @@ GPUBuffer::GPUBuffer(GPUBuffer&& rhs)
 GPUBuffer::GPUBuffer(uint32_t elemSize, uint32_t numElems /*= 1*/, BufferUsage usage /*= BufferUsage::All*/)
     : mNumElems(numElems), mElemSize(elemSize), mUsage(usage)
 {
-    if      (HasBufferUsage(BufferUsage::Constant))         { mCurrentResourceState = GetResourceState(BufferUsage::Constant); }
-    else if (HasBufferUsage(BufferUsage::Structured))       { mCurrentResourceState = GetResourceState(BufferUsage::Structured); }
-    else if (HasBufferUsage(BufferUsage::UnorderedAccess))  { mCurrentResourceState = GetResourceState(BufferUsage::UnorderedAccess); }
-    else if (HasBufferUsage(BufferUsage::Vertex))           { mCurrentResourceState = GetResourceState(BufferUsage::Vertex); }
-    else if (HasBufferUsage(BufferUsage::Index))            { mCurrentResourceState = GetResourceState(BufferUsage::Index); }
-    else if (HasBufferUsage(BufferUsage::Indirect))         { mCurrentResourceState = GetResourceState(BufferUsage::Indirect); }
-    else if (HasBufferUsage(BufferUsage::All))              { mCurrentResourceState = GetResourceState(BufferUsage::All); }
+    if      (HasBufferUsage(BufferUsage::Constant))         { mCurrentUsage = BufferUsage::Constant; }
+    else if (HasBufferUsage(BufferUsage::Structured))       { mCurrentUsage = BufferUsage::Structured; }
+    else if (HasBufferUsage(BufferUsage::UnorderedAccess))  { mCurrentUsage = BufferUsage::UnorderedAccess; }
+    else if (HasBufferUsage(BufferUsage::Vertex))           { mCurrentUsage = BufferUsage::Vertex; }
+    else if (HasBufferUsage(BufferUsage::Index))            { mCurrentUsage = BufferUsage::Index; }
+    else if (HasBufferUsage(BufferUsage::Indirect))         { mCurrentUsage = BufferUsage::Indirect; }
+    else if (HasBufferUsage(BufferUsage::All))              { mCurrentUsage = BufferUsage::All; }
 
     ID3D12Device* const device = Graphic::Get().GetDevice();
     const uint32_t size = mNumElems * mElemSize;
 
-    HRESULT hr = device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(size), mCurrentResourceState, nullptr, IID_PPV_ARGS(&mResource));
+    HRESULT hr = device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(size), GetCurrentResourceState(), nullptr, IID_PPV_ARGS(&mResource));
     assert(SUCCEEDED(hr));
 
     CreateViews();
@@ -73,15 +73,17 @@ void GPUBuffer::Unmap(CommandList& cmdList)
 
     mTemporaryMapResource->Unmap();
 
-    cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mResource, mCurrentResourceState, D3D12_RESOURCE_STATE_COPY_DEST));
+    cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mResource, GetCurrentResourceState(), D3D12_RESOURCE_STATE_COPY_DEST));
     cmdList->CopyBufferRegion(mResource, mMappedRangeStart, mTemporaryMapResource->GetResource(), mTemporaryMapResource->GetStartRange(), mMappedRangeEnd - mMappedRangeStart);
-    cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mResource, D3D12_RESOURCE_STATE_COPY_DEST, mCurrentResourceState));
+    cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mResource, D3D12_RESOURCE_STATE_COPY_DEST, GetCurrentResourceState()));
 
     mTemporaryMapResource = nullptr;
 }
 
 D3D12_RESOURCE_STATES GPUBuffer::GetResourceState(BufferUsage usage) const
 {
+    assert(IsPow2(static_cast<BufferUsageType>(usage))); // Only one bit can be set
+
     switch (usage)
     {
     case BufferUsage::Constant:
@@ -162,6 +164,13 @@ D3D12_CPU_DESCRIPTOR_HANDLE GPUBuffer::GetUAV()
 {
     assert(HasBufferUsage(BufferUsage::UnorderedAccess));
     return *mUAVHandle;
+}
+
+void GPUBuffer::SetCurrentUsage(BufferUsage usage)
+{
+    assert(IsPow2(static_cast<BufferUsageType>(usage))); // Only one bit can be set
+    assert(HasBufferUsage(usage));
+    mCurrentUsage = usage;
 }
 
 GPUBuffer::~GPUBuffer()

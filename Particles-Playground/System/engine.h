@@ -7,6 +7,7 @@
 #include "System/gpubuffer.h"
 #include "System/cpudescriptorheap.h"
 #include "System/gpudescriptorheap.h"
+#include "Graphics/camera.h"
 #include "Utilities/memory.h"
 
 class Engine

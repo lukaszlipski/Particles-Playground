@@ -5,7 +5,9 @@
 class CommandList;
 class CPUDescriptorHandle;
 
-enum class BufferUsage : uint8_t
+using BufferUsageType = uint8_t;
+
+enum class BufferUsage : BufferUsageType
 {
     Constant        = 1 << 0,
     Structured      = 1 << 1,
@@ -13,15 +15,17 @@ enum class BufferUsage : uint8_t
     Vertex          = 1 << 3,
     Index           = 1 << 4,
     Indirect        = 1 << 5,
-    All             = 255
+    CopyDst         = 1 << 6,
+    CopySrc         = 1 << 7,
+    All             = std::numeric_limits<BufferUsageType>::max()
 };
 
 constexpr BufferUsage operator|(BufferUsage lhs, BufferUsage rhs) {
-    return static_cast<BufferUsage>(static_cast<uint8_t>(lhs) | static_cast<uint8_t>(rhs));
+    return static_cast<BufferUsage>(static_cast<BufferUsageType>(lhs) | static_cast<BufferUsageType>(rhs));
 }
 
 constexpr BufferUsage operator&(BufferUsage lhs, BufferUsage rhs) {
-    return static_cast<BufferUsage>(static_cast<uint8_t>(lhs) & static_cast<uint8_t>(rhs));
+    return static_cast<BufferUsage>(static_cast<BufferUsageType>(lhs) & static_cast<BufferUsageType>(rhs));
 }
 
 class GPUBuffer
@@ -39,7 +43,8 @@ public:
 
     inline ID3D12Resource* GetResource() const { return mResource; }
     inline uint32_t GetBufferSize() const { return mElemSize * mNumElems; }
-    inline bool HasBufferUsage(BufferUsage usage) const { return static_cast<uint8_t>(mUsage & usage) == static_cast<uint8_t>(usage); }
+    inline bool HasBufferUsage(BufferUsage usage) const { return static_cast<BufferUsageType>(mUsage & usage) == static_cast<BufferUsageType>(usage); }
+    inline D3D12_RESOURCE_STATES GetCurrentResourceState() const { return GetResourceState(mCurrentUsage); }
 
     D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress(uint32_t elemIdx = 0);
     uint8_t* Map(uint32_t start, uint32_t end);
@@ -48,6 +53,7 @@ public:
     D3D12_CPU_DESCRIPTOR_HANDLE GetCBV();
     D3D12_CPU_DESCRIPTOR_HANDLE GetSRV();
     D3D12_CPU_DESCRIPTOR_HANDLE GetUAV();
+    void SetCurrentUsage(BufferUsage usage);
 
 private:
     D3D12_RESOURCE_STATES GetResourceState(BufferUsage usage) const;
@@ -60,8 +66,8 @@ private:
     ID3D12Resource* mResource = nullptr;
     uint32_t mNumElems = 0;
     uint32_t mElemSize = 0;
-    D3D12_RESOURCE_STATES mCurrentResourceState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
     BufferUsage mUsage;
+    BufferUsage mCurrentUsage;
     std::unique_ptr<CPUDescriptorHandle> mCBVHandle;
     std::unique_ptr<CPUDescriptorHandle> mSRVHandle;
     std::unique_ptr<CPUDescriptorHandle> mUAVHandle;

@@ -165,6 +165,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Graphics\camera.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -185,6 +186,7 @@
     <ClCompile Include="Utilities\linearallocator.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Graphics\camera.h" />
     <ClInclude Include="Includes\d3dx12.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="System\commandlist.h" />
