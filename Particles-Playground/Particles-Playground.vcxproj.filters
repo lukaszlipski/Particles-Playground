@@ -69,6 +69,12 @@
     <ClCompile Include="System\shaderparameters.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="System\pipelinestate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="System\shaderparameterslayout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -138,6 +144,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="System\shaderparameters.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="System\pipelinestate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="System\shaderparameterslayout.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

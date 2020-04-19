@@ -1,6 +1,9 @@
-#include "psomanager.h"
-#include "graphic.h"
-#include "commandlist.h"
+#include "System/psomanager.h"
+#include "System/graphic.h"
+#include "System/commandlist.h"
+#include "System/pipelinestate.h"
+#include "System/shaderparameterslayout.h"
+#include "Utilities/debug.h"
 
 const std::wstring SHADER_FOLDER = L"Shaders/";
 
@@ -13,24 +16,22 @@ bool PSOManager::Startup()
         mRootSigVer = D3D_ROOT_SIGNATURE_VERSION_1_0;
     }
 
-    // Prepare Root Signatures
-    SetupDefaultRootSig();
-
-    // Prepare PSOs
-    SetupDefaultPSO();
-
     return true;
 }
 
 bool PSOManager::Shutdown()
 {
-    for (auto& [type, extendedPSO] : mPSOMap)
+    for (auto& [key, shader] : mShaders)
     {
-        auto& [pso, rootSigType, pipelineType] = extendedPSO;
+        shader->Release();
+    }
+
+    for (auto& [key, pso] : mCachedPipelineStates)
+    {
         pso->Release();
     }
 
-    for (auto& [type, rootSig] : mRootSigMap)
+    for (auto& [type, rootSig] : mCachedRootSignatures)
     {
         rootSig->Release();
     }
@@ -38,128 +39,80 @@ bool PSOManager::Shutdown()
     return true;
 }
 
-void PSOManager::Bind(CommandList& cmdList, const PSOKey key)
+ID3DBlob* PSOManager::GetShader(std::wstring_view name)
 {
-    auto& [pso, rootSigType, pipelineType] = mPSOMap[key];
-    assert(pso);
-    ID3D12RootSignature* rootSig = mRootSigMap[rootSigType];
-    assert(rootSig);
+    const size_t key = std::hash<std::wstring_view>{}(name);
+    auto shaderIt = mShaders.find(key);
 
-    cmdList->SetPipelineState(pso);
-    
-    switch (pipelineType)
+    if (shaderIt != mShaders.end())
     {
-    case PipelineType::Graphics: { cmdList->SetGraphicsRootSignature(rootSig); break; }
-    case PipelineType::Compute: { cmdList->SetComputeRootSignature(rootSig); break; }
+        return shaderIt->second;
     }
+
+    ID3DBlob* shader = nullptr;
+    const std::wstring fileName = SHADER_FOLDER + name.data() + L".cso";
+    HRESULT hr = D3DReadFileToBlob(fileName.c_str(), &shader);
+    assert(SUCCEEDED(hr));
+    mShaders[key] = shader;
+
+    return shader;
 }
 
-bool PSOManager::SetupDefaultRootSig()
-{  
-    D3D12_DESCRIPTOR_RANGE1 range{};
-    range.BaseShaderRegister = 0;
-    range.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
-    range.NumDescriptors = 1;
-    range.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-    range.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
-    range.RegisterSpace = 0;
+ID3D12PipelineState* PSOManager::CompilePipelineState(const GraphicPipelineState& pipelineState)
+{
+    const uint32_t key = pipelineState.Hash();
+    auto psoIt = mCachedPipelineStates.find(key);
 
-    D3D12_DESCRIPTOR_RANGE1 rangeSRV{};
-    rangeSRV.BaseShaderRegister = 0;
-    rangeSRV.Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
-    rangeSRV.NumDescriptors = 1;
-    rangeSRV.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-    rangeSRV.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-    rangeSRV.RegisterSpace = 0;
+    if (psoIt != mCachedPipelineStates.end())
+    {
+        return psoIt->second;
+    }
 
-    CD3DX12_ROOT_PARAMETER1 rootParams[3];
-    rootParams[0].InitAsDescriptorTable(1, &range, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParams[1].InitAsDescriptorTable(1, &rangeSRV, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParams[2].InitAsConstants(1, 1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    ID3D12Device* device = Graphic::Get().GetDevice();
+
+    ID3D12PipelineState* pso = nullptr;
+    const D3D12_GRAPHICS_PIPELINE_STATE_DESC& stateDesc = pipelineState;
+    HRESULT hr = device->CreateGraphicsPipelineState(&stateDesc, IID_PPV_ARGS(&pso));
+    assert(SUCCEEDED(hr));
+
+    mCachedPipelineStates[key] = pso;
+    return pso;
+}
+
+ID3D12RootSignature* PSOManager::CompileShaderParameterLayout(const ShaderParametersLayout& layout)
+{
+    const uint32_t key = layout.Hash();
+    auto layoutIt = mCachedRootSignatures.find(key);
+
+    if (layoutIt != mCachedRootSignatures.end())
+    {
+        return layoutIt->second;
+    }
+
+    RootParameters params = layout.GetParameters();
+    auto& [rootParams, ranges] = params;
 
     CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSigDesc{};
-    rootSigDesc.Init_1_1(_countof(rootParams), rootParams, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS | D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS | D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS);
+    rootSigDesc.Init_1_1(static_cast<uint32_t>(rootParams.size()), rootParams.data(), 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ID3DBlob* blob = nullptr;
     ID3DBlob* error = nullptr;
-    D3DX12SerializeVersionedRootSignature(&rootSigDesc, mRootSigVer, &blob, &error);
+    HRESULT hr = D3DX12SerializeVersionedRootSignature(&rootSigDesc, mRootSigVer, &blob, &error);
+
+    if (FAILED(hr))
+    {
+        const char* errorMsg = reinterpret_cast<const char*>(error->GetBufferPointer());
+        OutputDebugMessage("Root Signature Error: %s\n", errorMsg);
+        assert(0);
+    }
+
+    ID3D12Device* device = Graphic::Get().GetDevice();
 
     ID3D12RootSignature* rootSig = nullptr;
-    if (FAILED(Graphic::Get().GetDevice()->CreateRootSignature(0, blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(&rootSig))))
-    {
-        if (blob) { blob->Release(); }
-        if (error) { error->Release(); }
+    hr = device->CreateRootSignature(0, blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(&rootSig));
+    assert(SUCCEEDED(hr));
+    blob->Release();
 
-        return false;
-    }
-
-    if (blob) { blob->Release(); }
-    if (error) { error->Release(); }
-
-    mRootSigMap[RootSigType::Default] = rootSig;
-
-    return true;
-}
-
-bool PSOManager::SetupDefaultPSO()
-{
-    const RootSigType rootSig = RootSigType::Default;
-
-    ID3DBlob* vertexShader;
-    ID3DBlob* pixelShader;
-
-    std::wstring vsShaderFileName = SHADER_FOLDER + L"vsdefault.cso";
-    std::wstring psShaderFileName = SHADER_FOLDER + L"psdefault.cso";
-    
-    D3DReadFileToBlob(vsShaderFileName.c_str(), &vertexShader);
-    D3DReadFileToBlob(psShaderFileName.c_str(), &pixelShader);
-
-    const std::vector<VertexFormatDescRef> vertexFormatDefs = { GetVertexFormatDesc<DefaultVertex>() };
-
-    for (VertexFormatDescRef vertexFormatDef : vertexFormatDefs)
-    {
-        D3D12_GRAPHICS_PIPELINE_STATE_DESC info{};
-        info.pRootSignature = mRootSigMap[rootSig];
-        info.InputLayout = { vertexFormatDef->data() , static_cast<uint32_t>(vertexFormatDef->size()) };
-        info.VS = CD3DX12_SHADER_BYTECODE(vertexShader);
-        info.PS = CD3DX12_SHADER_BYTECODE(pixelShader);
-        //info.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-        info.NumRenderTargets = 1;
-        info.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-        info.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-        info.SampleMask = UINT_MAX;
-        info.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-        //info.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-
-        D3D12_BLEND_DESC alphaBlend = {}; // temporary blend state for default
-        alphaBlend.IndependentBlendEnable = FALSE;
-        alphaBlend.RenderTarget[0].BlendEnable = TRUE;
-        alphaBlend.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
-        alphaBlend.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-        alphaBlend.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
-        alphaBlend.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
-        alphaBlend.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_INV_SRC_ALPHA;
-        alphaBlend.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-        alphaBlend.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-
-        info.BlendState = alphaBlend;
-
-        info.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-        info.SampleDesc.Count = 1;
-
-        ID3D12PipelineState* pso = nullptr;
-        if (FAILED(Graphic::Get().GetDevice()->CreateGraphicsPipelineState(&info, IID_PPV_ARGS(&pso))))
-        {
-            if (vertexShader) { vertexShader->Release(); }
-            if (pixelShader) { pixelShader->Release(); }
-            return false;
-        }
-
-        if (vertexShader) { vertexShader->Release(); }
-        if (pixelShader) { pixelShader->Release(); }
-
-        PSOKey key = { PSOType::Default, vertexFormatDef };
-        mPSOMap[key] = { pso, rootSig, PipelineType::Graphics };
-    }
-    return true;
+    mCachedRootSignatures[key] = rootSig;
+    return rootSig;
 }

@@ -1,30 +1,16 @@
-#pragma 
-#include "vertexformats.h"
+#pragma once
 
 class CommandList;
-
-enum class PSOType
-{
-    Default = 0,
-};
+class ShaderParametersLayout;
+class GraphicPipelineState;
 
 enum class RootSigType
 {
     Default = 0,
 };
 
-enum class PipelineType
-{
-    Graphics = 0,
-    Compute
-};
-
-using PSOKey = std::pair<PSOType, VertexFormatDescRef>;
-
 class PSOManager
 {
-    using ExtendedPSO = std::tuple<ID3D12PipelineState*, RootSigType, PipelineType>;
-
 public:
     PSOManager(const PSOManager&) = delete;
     PSOManager(PSOManager&&) = delete;
@@ -41,17 +27,17 @@ public:
         return *instance;
     }
 
-    void Bind(CommandList& cmdList, const PSOKey key);
+    ID3DBlob* GetShader(std::wstring_view name);
+    ID3D12PipelineState* CompilePipelineState(const GraphicPipelineState& pipelineState);
+    ID3D12RootSignature* CompileShaderParameterLayout(const ShaderParametersLayout& layout);
 
 private:
     explicit PSOManager() = default;
 
-    bool SetupDefaultRootSig();
-    bool SetupDefaultPSO();
-
     D3D_ROOT_SIGNATURE_VERSION mRootSigVer;
-    std::map<RootSigType, ID3D12RootSignature*> mRootSigMap;
-    std::map<PSOKey, ExtendedPSO> mPSOMap;
+    std::map<size_t, ID3DBlob*> mShaders;
+    std::map<uint32_t, ID3D12RootSignature*> mCachedRootSignatures;
+    std::map<uint32_t, ID3D12PipelineState*> mCachedPipelineStates;
 
 };
 

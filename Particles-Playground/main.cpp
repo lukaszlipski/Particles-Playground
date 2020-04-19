@@ -93,8 +93,23 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
             FLOAT clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
             commandList->ClearRenderTargetView(Graphic::Get().GetCurrentRenderTargetHandle(), clearColor, 0, nullptr);
 
-            const PSOKey key{ PSOType::Default, MeshManager::Get().GetVertexFormatDescRef(MeshType::Square) };
-            PSOManager::Get().Bind(commandList, key);
+            ShaderParametersLayout layout;
+            layout.SetCBV(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+            layout.SetSRV(1, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+            layout.SetConstant(2, 1, 1, D3D12_SHADER_VISIBILITY_PIXEL);
+
+            GraphicPipelineState state;
+            D3D12_RENDER_TARGET_BLEND_DESC blendDesc{};
+            blendDesc.BlendEnable = TRUE;
+            blendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
+            blendDesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+            blendDesc.BlendOp = D3D12_BLEND_OP_ADD;
+            blendDesc.SrcBlendAlpha = D3D12_BLEND_ONE;
+            blendDesc.DestBlendAlpha = D3D12_BLEND_INV_SRC_ALPHA;
+            blendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+            state.SetRTBlendState(0, blendDesc);
+            state.Bind(commandList, layout);
 
             commandList->OMSetRenderTargets(1, &Graphic::Get().GetCurrentRenderTargetHandle(), false, nullptr);
 
@@ -108,9 +123,6 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
             params.SetSRV(1, *srvBuffer);
             params.SetConstant(2, 0.5f);
             params.Bind(commandList);
-
-            commandList->RSSetViewports(1, &CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(Window::Get().GetWidth()), static_cast<float>(Window::Get().GetHeight())));
-            commandList->RSSetScissorRects(1, &CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX));
 
             MeshManager::Get().Draw(commandList, MeshType::Square, static_cast<uint32_t>(data.size()));
 

@@ -9,6 +9,8 @@
 #include "System/gpudescriptorheap.h"
 #include "System/globaltimer.h"
 #include "System/shaderparameters.h"
+#include "System/pipelinestate.h"
+#include "System/shaderparameterslayout.h"
 #include "Graphics/camera.h"
 #include "Utilities/memory.h"
 #include "Utilities/debug.h"
