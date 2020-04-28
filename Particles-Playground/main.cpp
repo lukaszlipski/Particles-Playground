@@ -42,7 +42,6 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
         float Fade;
     };
 
-    uint32_t dataSize = Align(static_cast<uint32_t>(10 * sizeof(ParticleData)),256);
     std::array<ParticleData, 10> data;
     {
         std::mt19937 rng(std::random_device{}());
@@ -59,6 +58,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     }
 
     std::unique_ptr<GPUBuffer> srvBuffer = std::make_unique<GPUBuffer>(static_cast<uint32_t>(sizeof(ParticleData)), 10, BufferUsage::Structured);
+    std::unique_ptr<GPUBuffer> uavBuffer = std::make_unique<GPUBuffer>(static_cast<uint32_t>(sizeof(int32_t)), 64, BufferUsage::UnorderedAccess);
 
     Engine::Get().PostStartup();
     
@@ -122,12 +122,24 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
             params.SetCBV(0, *constantBuffer);
             params.SetSRV(1, *srvBuffer);
             params.SetConstant(2, 0.5f);
-            params.Bind(commandList);
+            params.Bind<true>(commandList);
 
             MeshManager::Get().Draw(commandList, MeshType::Square, static_cast<uint32_t>(data.size()));
 
             barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(Graphic::Get().GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
             commandList->ResourceBarrier(static_cast<uint32_t>(barriers.size()), barriers.data());
+            
+            // Test compute shader
+            ShaderParametersLayout cLayout;
+            cLayout.SetUAV(0, 0, D3D12_SHADER_VISIBILITY_ALL);
+            ComputePipelineState cState;
+            cState.Bind(commandList, cLayout);
+            
+            ShaderParameters cParams;
+            cParams.SetUAV(0, *uavBuffer);
+            cParams.Bind<false>(commandList);
+
+            commandList->Dispatch(1, 1, 1);
 
             commandList.Submit();
         }
@@ -137,6 +149,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
 
     Engine::Get().PreShutdown();
 
+    uavBuffer.reset();
     srvBuffer.reset();
     constantBuffer.reset();
 

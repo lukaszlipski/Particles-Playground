@@ -60,3 +60,13 @@ private:
 
 };
 
+class ComputePipelineState : public PipelineState<D3D12_COMPUTE_PIPELINE_STATE_DESC>
+{
+public:
+    ComputePipelineState();
+
+    ComputePipelineState& SetCS(std::wstring_view name);
+    void Bind(CommandList& commandList, ShaderParametersLayout& layout);
+
+};
+

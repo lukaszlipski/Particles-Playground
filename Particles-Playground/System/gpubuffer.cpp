@@ -36,9 +36,15 @@ GPUBuffer::GPUBuffer(uint32_t elemSize, uint32_t numElems /*= 1*/, BufferUsage u
     else if (HasBufferUsage(BufferUsage::All))              { mCurrentUsage = BufferUsage::All; }
 
     ID3D12Device* const device = Graphic::Get().GetDevice();
-    const uint32_t size = mNumElems * mElemSize;
 
-    HRESULT hr = device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(size), GetCurrentResourceState(), nullptr, IID_PPV_ARGS(&mResource));
+    const uint32_t size = mNumElems * mElemSize;
+    D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(size);
+    if(HasBufferUsage(BufferUsage::UnorderedAccess))
+    {
+        desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+    }
+
+    const HRESULT hr = device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &desc, GetCurrentResourceState(), nullptr, IID_PPV_ARGS(&mResource));
     assert(SUCCEEDED(hr));
 
     CreateViews();
@@ -142,7 +148,7 @@ void GPUBuffer::CreateViews()
         desc.Buffer.NumElements = mNumElems;
         desc.Buffer.StructureByteStride = mElemSize;
         desc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
-        desc.Buffer.CounterOffsetInBytes = mNumElems * mElemSize;
+        //desc.Buffer.CounterOffsetInBytes = mNumElems * mElemSize;
 
         Graphic::Get().GetDevice()->CreateUnorderedAccessView(mResource, nullptr, &desc, *mUAVHandle);
     }
@@ -166,10 +172,19 @@ D3D12_CPU_DESCRIPTOR_HANDLE GPUBuffer::GetUAV()
     return *mUAVHandle;
 }
 
-void GPUBuffer::SetCurrentUsage(BufferUsage usage)
+void GPUBuffer::SetCurrentUsage(BufferUsage usage, std::vector<D3D12_RESOURCE_BARRIER>& barriers)
 {
     assert(IsPow2(static_cast<BufferUsageType>(usage))); // Only one bit can be set
     assert(HasBufferUsage(usage));
+
+    const D3D12_RESOURCE_STATES stateBefore = GetResourceState(mCurrentUsage);
+    const D3D12_RESOURCE_STATES stateAfter = GetResourceState(usage);
+
+    if(stateBefore != stateAfter)
+    {
+        D3D12_RESOURCE_BARRIER& barrier = barriers.emplace_back();
+        barrier = CD3DX12_RESOURCE_BARRIER::Transition(GetResource(), stateBefore, stateAfter);
+    }
     mCurrentUsage = usage;
 }
 

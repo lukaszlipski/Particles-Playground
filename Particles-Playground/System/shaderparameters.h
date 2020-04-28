@@ -10,7 +10,20 @@ class ShaderParameters
         std::vector<uint32_t> Data;
     };
 
-    using ParameterVar = std::variant<D3D12_CPU_DESCRIPTOR_HANDLE, RootConstant>;
+    enum class DescriptorType
+    {
+        CBV = 0,
+        SRV,
+        UAV
+    };
+
+    struct SingleDescriptor
+    {
+        DescriptorType Type;
+        GPUBuffer* Resource = nullptr;
+    };
+
+    using ParameterVar = std::variant<SingleDescriptor, RootConstant>;
 
 public:
     ShaderParameters() = default;
@@ -25,6 +38,7 @@ public:
     template<typename T>
     ShaderParameters& SetConstant(uint32_t idx, const T& data);
 
+    template<bool isGraphics>
     void Bind(CommandList& commandList);
 
 private:
@@ -32,16 +46,4 @@ private:
     
 };
 
-template<typename T>
-ShaderParameters& ShaderParameters::SetConstant(uint32_t idx, const T& data)
-{
-    const uint32_t size = std::max(static_cast<uint32_t>(sizeof(T) / 4), 1U);
-    RootConstant constant;
-    constant.Data.resize(size);
-    
-    memcpy(constant.Data.data() , &data, sizeof(T));
-
-    mParams[idx] = std::move(constant);
-
-    return *this;
-}
+#include "shaderparameters.inl"

@@ -10,7 +10,6 @@ const std::wstring SHADER_FOLDER = L"Shaders/";
 bool PSOManager::Startup()
 {
     D3D12_FEATURE_DATA_ROOT_SIGNATURE feature{};
-    mRootSigVer = D3D_ROOT_SIGNATURE_VERSION_1_1;
     if (FAILED(Graphic::Get().GetDevice()->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &feature, sizeof(feature))))
     {
         mRootSigVer = D3D_ROOT_SIGNATURE_VERSION_1_0;
@@ -58,7 +57,8 @@ ID3DBlob* PSOManager::GetShader(std::wstring_view name)
     return shader;
 }
 
-ID3D12PipelineState* PSOManager::CompilePipelineState(const GraphicPipelineState& pipelineState)
+template<typename PipelineState>
+ID3D12PipelineState* PSOManager::CompilePipelineState(const PipelineState& pipelineState)
 {
     const uint32_t key = pipelineState.Hash();
     auto psoIt = mCachedPipelineStates.find(key);
@@ -68,16 +68,14 @@ ID3D12PipelineState* PSOManager::CompilePipelineState(const GraphicPipelineState
         return psoIt->second;
     }
 
-    ID3D12Device* device = Graphic::Get().GetDevice();
-
-    ID3D12PipelineState* pso = nullptr;
-    const D3D12_GRAPHICS_PIPELINE_STATE_DESC& stateDesc = pipelineState;
-    HRESULT hr = device->CreateGraphicsPipelineState(&stateDesc, IID_PPV_ARGS(&pso));
-    assert(SUCCEEDED(hr));
+    ID3D12PipelineState* pso = CreatePipelineState(pipelineState);
 
     mCachedPipelineStates[key] = pso;
     return pso;
 }
+
+template ID3D12PipelineState* PSOManager::CompilePipelineState<GraphicPipelineState>(const GraphicPipelineState& pipelineState);
+template ID3D12PipelineState* PSOManager::CompilePipelineState<ComputePipelineState>(const ComputePipelineState& pipelineState);
 
 ID3D12RootSignature* PSOManager::CompileShaderParameterLayout(const ShaderParametersLayout& layout)
 {
@@ -115,4 +113,22 @@ ID3D12RootSignature* PSOManager::CompileShaderParameterLayout(const ShaderParame
 
     mCachedRootSignatures[key] = rootSig;
     return rootSig;
+}
+
+ID3D12PipelineState* PSOManager::CreatePipelineState(const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc)
+{
+    ID3D12Device* device = Graphic::Get().GetDevice();
+    ID3D12PipelineState* result = nullptr;
+    HRESULT hr = device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&result));
+    assert(SUCCEEDED(hr));
+    return result;
+}
+
+ID3D12PipelineState* PSOManager::CreatePipelineState(const D3D12_COMPUTE_PIPELINE_STATE_DESC& desc)
+{
+    ID3D12Device* device = Graphic::Get().GetDevice();
+    ID3D12PipelineState* result = nullptr;
+    HRESULT hr = device->CreateComputePipelineState(&desc, IID_PPV_ARGS(&result));
+    assert(SUCCEEDED(hr));
+    return result;
 }

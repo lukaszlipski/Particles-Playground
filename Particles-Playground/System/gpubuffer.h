@@ -53,7 +53,7 @@ public:
     D3D12_CPU_DESCRIPTOR_HANDLE GetCBV();
     D3D12_CPU_DESCRIPTOR_HANDLE GetSRV();
     D3D12_CPU_DESCRIPTOR_HANDLE GetUAV();
-    void SetCurrentUsage(BufferUsage usage);
+    void SetCurrentUsage(BufferUsage usage, std::vector<D3D12_RESOURCE_BARRIER>& barriers);
 
 private:
     D3D12_RESOURCE_STATES GetResourceState(BufferUsage usage) const;

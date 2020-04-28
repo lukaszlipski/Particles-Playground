@@ -43,6 +43,8 @@ ShaderParametersLayout& ShaderParametersLayout::SetConstant(uint32_t idx, uint32
 
 uint32_t ShaderParametersLayout::Hash() const
 {
+    if (mParams.empty()) { return 0; }
+
     auto maxElem = std::max_element(mParams.begin(), mParams.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
     const uint32_t biggestIdx = maxElem->first;
     
@@ -69,6 +71,8 @@ uint32_t ShaderParametersLayout::Hash() const
 
 RootParameters ShaderParametersLayout::GetParameters() const
 {
+    if (mParams.empty()) { return {}; }
+
     auto maxElem = std::max_element(mParams.begin(), mParams.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
     const uint32_t biggestIdx = maxElem->first;
 

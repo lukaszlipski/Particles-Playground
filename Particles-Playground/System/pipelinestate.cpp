@@ -109,3 +109,30 @@ void GraphicPipelineState::Bind(CommandList& commandList, ShaderParametersLayout
     commandList->RSSetScissorRects(mState.NumRenderTargets, mScissorRects.data());
 
 }
+
+ComputePipelineState::ComputePipelineState()
+{
+    SetCS(L"csdefault");
+}
+
+ComputePipelineState& ComputePipelineState::SetCS(std::wstring_view name)
+{
+    mState.CS = CD3DX12_SHADER_BYTECODE(PSOManager::Get().GetShader(name));
+    return *this;
+}
+
+void ComputePipelineState::Bind(CommandList& commandList, ShaderParametersLayout& layout)
+{
+    PSOManager& psoManager = PSOManager::Get();
+
+    // Get and set root signature based on shader parameters layout
+    ID3D12RootSignature* rootSig = psoManager.CompileShaderParameterLayout(layout);
+    commandList->SetComputeRootSignature(rootSig);
+
+    // Update state's sturcture with a proper root signature
+    mState.pRootSignature = rootSig;
+
+    // Get and set pipeline state based on provided parameters
+    ID3D12PipelineState* pso = PSOManager::Get().CompilePipelineState(*this);
+    commandList->SetPipelineState(pso);
+}

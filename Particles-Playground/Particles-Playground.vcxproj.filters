@@ -156,10 +156,14 @@
   <ItemGroup>
     <FxCompile Include="Shaders\Source\psdefault.hlsl" />
     <FxCompile Include="Shaders\Source\vsdefault.hlsl" />
+    <FxCompile Include="Shaders\Source\csdefault.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Source\default.hlsli" />
     <None Include="Utilities\freelistallocator.inl">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="System\shaderparameters.inl">
       <Filter>Header Files</Filter>
     </None>
   </ItemGroup>
