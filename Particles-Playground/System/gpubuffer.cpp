@@ -188,6 +188,12 @@ void GPUBuffer::SetCurrentUsage(BufferUsage usage, std::vector<D3D12_RESOURCE_BA
     mCurrentUsage = usage;
 }
 
+void GPUBuffer::SetDebugName(std::wstring_view name)
+{
+    assert(mResource);
+    mResource->SetName(name.data());
+}
+
 GPUBuffer::~GPUBuffer()
 {
     if (mResource)

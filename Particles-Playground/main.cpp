@@ -9,6 +9,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     constantBufferSize = AlignPow2(constantBufferSize, 256U);
 
     std::unique_ptr<GPUBuffer> constantBuffer = std::make_unique<GPUBuffer>(constantBufferSize, constantBufferCount, BufferUsage::Constant);
+    constantBuffer->SetDebugName(L"ConstantBuffer");
 
     // Prepare a camera
     Camera camera({ 0, 0,-3,1 }, { 0, 0, 1,0 });
@@ -58,7 +59,9 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     }
 
     std::unique_ptr<GPUBuffer> srvBuffer = std::make_unique<GPUBuffer>(static_cast<uint32_t>(sizeof(ParticleData)), 10, BufferUsage::Structured);
+    srvBuffer->SetDebugName(L"StructuredBuffer");
     std::unique_ptr<GPUBuffer> uavBuffer = std::make_unique<GPUBuffer>(static_cast<uint32_t>(sizeof(int32_t)), 64, BufferUsage::UnorderedAccess);
+    uavBuffer->SetDebugName(L"UnorderedAccessBuffer");
 
     Engine::Get().PostStartup();
     

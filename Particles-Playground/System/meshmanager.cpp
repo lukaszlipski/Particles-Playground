@@ -69,9 +69,12 @@ void MeshManager::CreateSquare(CommandList& cmdList)
     mesh.VertexFormat = GetVertexFormatDesc<std::remove_all_extents_t<decltype(vertices)>>();
     
     const uint32_t verticesSize = sizeof(vertices);
-    const uint32_t indicesSize = sizeof(indices);
     mesh.VertexBuffer = std::make_unique<GPUBuffer>(verticesSize, 1, BufferUsage::Vertex);
+    mesh.VertexBuffer->SetDebugName(L"SquareVertexBuffer");
+
+    const uint32_t indicesSize = sizeof(indices);
     mesh.IndexBuffer = std::make_unique<GPUBuffer>(indicesSize, 1, BufferUsage::Index);
+    mesh.IndexBuffer->SetDebugName(L"SquareIndexBuffer");
 
     uint8_t* data = nullptr;
 
