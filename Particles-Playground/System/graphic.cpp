@@ -62,6 +62,8 @@ bool Graphic::Startup()
 
     mGPUDescriptorHeapCBV = std::make_unique<GPUDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
+    if (!CreateDefaultCommandSignatures()) { return false; }
+
     return true;
 }
 
@@ -72,6 +74,9 @@ bool Graphic::Shutdown()
     for (ID3D12CommandAllocator* allocator : mDirectCommandAllocator) { allocator->Release(); }
     for (ID3D12CommandAllocator* allocator : mComputeCommandAllocator) { allocator->Release(); }
     for (ID3D12CommandAllocator* allocator : mCopyCommandAllocator) { allocator->Release(); }
+
+    if (mDefaultDrawCommandSignature) { mDefaultDrawCommandSignature->Release(); }
+    if (mDefaultDispatchCommandSignature) { mDefaultDispatchCommandSignature->Release(); }
 
     if (mCopyQueue) { mCopyQueue->Release(); }
     if (mComputeQueue) { mComputeQueue->Release(); }
@@ -297,4 +302,25 @@ bool Graphic::CreateSwapChain()
     mCurrentFrameIdx = mSwapChain->GetCurrentBackBufferIndex();
 
     return true;
+}
+
+bool Graphic::CreateDefaultCommandSignatures()
+{
+    std::array<D3D12_INDIRECT_ARGUMENT_DESC, 1> indirectArgs;
+    indirectArgs[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
+
+    D3D12_COMMAND_SIGNATURE_DESC desc{};
+    desc.pArgumentDescs = indirectArgs.data();
+    desc.NumArgumentDescs = static_cast<uint32_t>(indirectArgs.size());
+    desc.ByteStride = sizeof(D3D12_DRAW_INDEXED_ARGUMENTS);
+
+    HRESULT drawRes = mDevice->CreateCommandSignature(&desc, nullptr, IID_PPV_ARGS(&mDefaultDrawCommandSignature));
+
+    indirectArgs[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DISPATCH;
+    
+    desc.ByteStride = sizeof(D3D12_DISPATCH_ARGUMENTS);
+
+    HRESULT dispatchRes = mDevice->CreateCommandSignature(&desc, nullptr, IID_PPV_ARGS(&mDefaultDispatchCommandSignature));
+
+    return SUCCEEDED(drawRes) && SUCCEEDED(dispatchRes);
 }

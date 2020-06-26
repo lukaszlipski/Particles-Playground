@@ -63,7 +63,7 @@ void ShaderParameters::Bind(CommandList& commandList)
                 commandList->SetGraphicsRootDescriptorTable(idx, gpuHandle);
             } else {
                 commandList->SetComputeRootDescriptorTable(idx, gpuHandle);
-}
+            }
         }
         else if (std::holds_alternative<RootConstant>(var))
         {

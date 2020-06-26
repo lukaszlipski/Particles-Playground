@@ -26,3 +26,4 @@ using namespace DirectX;
 #include <chrono>
 #include <variant>
 #include <algorithm>
+#include <numeric>

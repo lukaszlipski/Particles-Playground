@@ -56,6 +56,8 @@ public:
     inline ID3D12DescriptorHeap* GetSwapChainDescriptorHeap() const { return mSwapChainDescHeap; }
     inline Fence* GetFence(uint32_t index) { return mFences[index].get(); }
     inline Fence* GetCurrentFence() { return mFences[GetCurrentFrameIndex()].get(); }
+    inline ID3D12CommandSignature* GetDefaultDrawCommandSignature() const { return mDefaultDrawCommandSignature; }
+    inline ID3D12CommandSignature* GetDefaultDispatchCommandSignature() const { return mDefaultDispatchCommandSignature; }
 
     static D3D12_COMMAND_LIST_TYPE GetCommandListType(QueueType type);
     static constexpr uint32_t GetFrameCount() { return mFrameCount; }
@@ -66,6 +68,7 @@ private:
     bool EnableDebugLayer();
     bool FindBestAdapter();
     bool CreateSwapChain();
+    bool CreateDefaultCommandSignatures();
 
     static const uint32_t mFrameCount = 3;
     uint32_t mRTVHandleSize = 0;
@@ -82,6 +85,8 @@ private:
     ID3D12CommandQueue* mDirectQueue = nullptr;
     ID3D12CommandQueue* mComputeQueue = nullptr;
     ID3D12CommandQueue* mCopyQueue = nullptr;
+    ID3D12CommandSignature* mDefaultDrawCommandSignature = nullptr;
+    ID3D12CommandSignature* mDefaultDispatchCommandSignature = nullptr;
 
     std::unique_ptr<CPUDescriptorHeap> mCPUDescriptorHeapCBV;
     std::unique_ptr<GPUDescriptorHeap> mGPUDescriptorHeapCBV;

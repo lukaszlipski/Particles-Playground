@@ -14,6 +14,7 @@ void Engine::PostStartup()
 {
     Graphic::Get().PostStartup();
     Window::Get().Show();
+    mTimer.Reset();
 }
 
 void Engine::PreUpdate()

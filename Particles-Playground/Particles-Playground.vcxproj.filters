@@ -156,7 +156,9 @@
   <ItemGroup>
     <FxCompile Include="Shaders\Source\psdefault.hlsl" />
     <FxCompile Include="Shaders\Source\vsdefault.hlsl" />
-    <FxCompile Include="Shaders\Source\csdefault.hlsl" />
+    <FxCompile Include="Shaders\Source\update.hlsl" />
+    <FxCompile Include="Shaders\Source\spawn.hlsl" />
+    <FxCompile Include="Shaders\Source\emitterupdate.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Source\default.hlsli" />
