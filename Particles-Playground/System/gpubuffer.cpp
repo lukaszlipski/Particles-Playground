@@ -2,28 +2,6 @@
 #include "commandlist.h"
 #include "cpudescriptorheap.h"
 
-
-GPUBuffer& GPUBuffer::operator=(GPUBuffer&& rhs)
-{
-    mResource = rhs.mResource;
-    rhs.mResource = nullptr;
-
-    mNumElems = rhs.mNumElems;
-    mElemSize = rhs.mElemSize;
-    mCurrentUsage = rhs.mCurrentUsage;
-    mUsage = rhs.mUsage;
-    mCBVHandle = std::move(rhs.mCBVHandle);
-    mSRVHandle = std::move(rhs.mSRVHandle);
-    mUAVHandle = std::move(rhs.mUAVHandle);
-
-    return *this;
-}
-
-GPUBuffer::GPUBuffer(GPUBuffer&& rhs)
-{
-    *this = std::move(rhs);
-}
-
 GPUBuffer::GPUBuffer(uint32_t elemSize, uint32_t numElems /*= 1*/, BufferUsage usage /*= BufferUsage::All*/)
     : mNumElems(numElems), mElemSize(elemSize), mUsage(usage)
 {
@@ -186,12 +164,6 @@ void GPUBuffer::SetCurrentUsage(BufferUsage usage, std::vector<D3D12_RESOURCE_BA
         barrier = CD3DX12_RESOURCE_BARRIER::Transition(GetResource(), stateBefore, stateAfter);
     }
     mCurrentUsage = usage;
-}
-
-void GPUBuffer::SetDebugName(std::wstring_view name)
-{
-    assert(mResource);
-    mResource->SetName(name.data());
 }
 
 GPUBuffer::~GPUBuffer()

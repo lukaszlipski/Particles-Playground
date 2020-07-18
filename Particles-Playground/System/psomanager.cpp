@@ -88,10 +88,11 @@ ID3D12RootSignature* PSOManager::CompileShaderParameterLayout(const ShaderParame
     }
 
     RootParameters params = layout.GetParameters();
-    auto& [rootParams, ranges] = params;
 
     CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSigDesc{};
-    rootSigDesc.Init_1_1(static_cast<uint32_t>(rootParams.size()), rootParams.data(), 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSigDesc.Init_1_1(static_cast<uint32_t>(params.Parameters.size()), params.Parameters.data(),
+                         static_cast<uint32_t>(params.StaticSamplers.size()), params.StaticSamplers.data(),
+                         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ID3DBlob* blob = nullptr;
     ID3DBlob* error = nullptr;

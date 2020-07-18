@@ -59,6 +59,7 @@ bool Graphic::Startup()
     mDXGIFactory->MakeWindowAssociation(handle, DXGI_MWA_NO_ALT_ENTER);
 
     mCPUDescriptorHeapCBV = std::make_unique<CPUDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    mCPUDescriptorHeapRTV = std::make_unique<CPUDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
     mGPUDescriptorHeapCBV = std::make_unique<GPUDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -88,6 +89,7 @@ bool Graphic::Shutdown()
     }
 
     if (mCPUDescriptorHeapCBV) { mCPUDescriptorHeapCBV.reset(); }
+    if (mCPUDescriptorHeapRTV) { mCPUDescriptorHeapRTV.reset(); }
 
     if (mGPUDescriptorHeapCBV) { mGPUDescriptorHeapCBV.reset(); }
 
@@ -187,6 +189,8 @@ CPUDescriptorHeap* Graphic::GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type
     {
     case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV:
         return mCPUDescriptorHeapCBV.get();
+    case D3D12_DESCRIPTOR_HEAP_TYPE_RTV:
+        return mCPUDescriptorHeapRTV.get();
     default:
         assert(false);
     }

@@ -27,3 +27,4 @@ using namespace DirectX;
 #include <variant>
 #include <algorithm>
 #include <numeric>
+#include <optional>

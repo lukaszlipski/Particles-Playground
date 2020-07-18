@@ -55,7 +55,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
         float LifeTime;
     };
 
-    const uint32_t maxParticleCount = 128;
+    const uint32_t maxParticleCount = 100;
 
     std::unique_ptr<GPUBuffer> particlesDataBuffer = std::make_unique<GPUBuffer>(static_cast<uint32_t>(sizeof(ParticleData)), maxParticleCount, BufferUsage::Structured | BufferUsage::UnorderedAccess);
     particlesDataBuffer->SetDebugName(L"ParticlesDataBuffer");
@@ -86,8 +86,8 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
         emitterData.MaxParticles = maxParticleCount;
         emitterData.ParticlesToSpawn = 0;
         emitterData.SpawnAccTime = 0;
-        emitterData.SpawnRate = 100.0f;
-        emitterData.LifeTime = 3.0f;
+        emitterData.SpawnRate = 10.0f;
+        emitterData.LifeTime = 2.0f;
 
         memcpy(data, &emitterData, sizeof(EmitterData));
 
@@ -114,6 +114,36 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
         commandList.Submit();
     }
 
+    std::unique_ptr<Texture2D> renderTarget = std::make_unique<Texture2D>(Window::Get().GetWidth(), Window::Get().GetHeight(), TextureFormat::R8G8B8A8, TextureUsage::RenderTarget | TextureUsage::ShaderResource);
+    renderTarget->SetDebugName(L"TestRenderTarget");
+
+    std::unique_ptr<Texture2D> texture = std::make_unique<Texture2D>(100, 100, TextureFormat::R32G32B32A32, TextureUsage::ShaderResource | TextureUsage::CopyDst);
+    texture->SetDebugName(L"TestTexture");
+
+    { // Generate a simple texture
+        uint8_t* data = texture->Map();
+    
+        float* floatData = reinterpret_cast<float*>(data);
+
+        for (uint32_t y = 0; y < texture->GetHeight(); ++y)
+        {
+            for (uint32_t x = 0; x < texture->GetWidth(); ++x, floatData += 4)
+            {
+                floatData[0] = x / static_cast<float>(texture->GetWidth());
+                floatData[1] = y / static_cast<float>(texture->GetHeight());
+                floatData[2] = 0.0f;
+                floatData[3] = 1.0f;
+            }
+        
+            floatData += texture->GetRowOffset() / sizeof(float);
+        }
+        
+        CommandList commandList(QueueType::Direct);    
+        texture->Unmap(commandList);
+        commandList.Submit();
+    }
+
+
     Engine::Get().PostStartup();
     
     while (Window::Get().IsRunning())
@@ -136,6 +166,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
             updateEmitterLayout.SetUAV(1, 0, D3D12_SHADER_VISIBILITY_ALL);
             updateEmitterLayout.SetUAV(2, 1, D3D12_SHADER_VISIBILITY_ALL);
             updateEmitterLayout.SetUAV(3, 2, D3D12_SHADER_VISIBILITY_ALL);
+            
             ComputePipelineState updateEmitterState;
             updateEmitterState.SetCS(L"emitterupdate");
             updateEmitterState.Bind(commandList, updateEmitterLayout);
@@ -145,7 +176,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
             updateEmitterParams.SetUAV(1, *emitterDataBuffer);
             updateEmitterParams.SetUAV(2, *drawIndirectBuffer);
             updateEmitterParams.SetUAV(3, *dispatchIndirectBuffer);
-            updateEmitterParams.Bind<false>(commandList);
+            updateEmitterParams.Bind<false>(commandList, updateEmitterLayout);
 
             commandList->Dispatch(1, 1, 1);
 
@@ -162,6 +193,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
             spawnLayout.SetUAV(1, 0, D3D12_SHADER_VISIBILITY_ALL);
             spawnLayout.SetUAV(2, 1, D3D12_SHADER_VISIBILITY_ALL);
             spawnLayout.SetUAV(3, 2, D3D12_SHADER_VISIBILITY_ALL);
+            
             ComputePipelineState spawnState;
             spawnState.SetCS(L"spawn");
             spawnState.Bind(commandList, spawnLayout);
@@ -170,7 +202,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
             spawnParams.SetUAV(1, *particlesDataBuffer);
             spawnParams.SetUAV(2, *emitterDataBuffer);
             spawnParams.SetUAV(3, *freeIndicesBuffer);
-            spawnParams.Bind<false>(commandList);
+            spawnParams.Bind<false>(commandList, spawnLayout);
 
             commandList->ExecuteIndirect(Graphic::Get().GetDefaultDispatchCommandSignature(), 1, dispatchIndirectBuffer->GetResource(), 0, nullptr, 0);
 
@@ -203,29 +235,31 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
             updateParams.SetUAV(3, *indicesBuffer);
             updateParams.SetUAV(4, *freeIndicesBuffer);
             updateParams.SetUAV(5, *drawIndirectBuffer);
-            updateParams.Bind<false>(commandList);
+            updateParams.Bind<false>(commandList, updateLayout);
 
             uint32_t updateGroups = static_cast<uint32_t>(std::ceil(float(maxParticleCount) / 64.0f));
             commandList->Dispatch(updateGroups, 1, 1);
 
             {
-                std::array< CD3DX12_RESOURCE_BARRIER, 2> barriers;
-                barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(drawIndirectBuffer->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
-                barriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(Graphic::Get().GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+                std::vector<D3D12_RESOURCE_BARRIER> barriers;
+                barriers.push_back(CD3DX12_RESOURCE_BARRIER::Transition(drawIndirectBuffer->GetResource(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT));
 
+                renderTarget->SetCurrentUsage(TextureUsage::RenderTarget, false, barriers);
+                
                 commandList->ResourceBarrier(static_cast<uint32_t>(barriers.size()), barriers.data());
             }
 
-            FLOAT clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-            commandList->ClearRenderTargetView(Graphic::Get().GetCurrentRenderTargetHandle(), clearColor, 0, nullptr);
+            // Draw particles
+            Sampler defaultSampler;
 
-            ShaderParametersLayout layout;
-            layout.SetCBV(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-            layout.SetSRV(1, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-            layout.SetSRV(2, 1, D3D12_SHADER_VISIBILITY_VERTEX);
-            layout.SetConstant(3, 1, 1, D3D12_SHADER_VISIBILITY_PIXEL);
+            ShaderParametersLayout drawLayout;
+            drawLayout.SetCBV(0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+            drawLayout.SetSRV(1, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+            drawLayout.SetSRV(2, 1, D3D12_SHADER_VISIBILITY_VERTEX);
+            drawLayout.SetSRV(3, 2, D3D12_SHADER_VISIBILITY_PIXEL);
+            drawLayout.SetStaticSampler(0, defaultSampler, D3D12_SHADER_VISIBILITY_PIXEL);
 
-            GraphicPipelineState state;
+            GraphicPipelineState drawState;
             D3D12_RENDER_TARGET_BLEND_DESC blendDesc{};
             blendDesc.BlendEnable = TRUE;
             blendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;
@@ -235,22 +269,53 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
             blendDesc.DestBlendAlpha = D3D12_BLEND_INV_SRC_ALPHA;
             blendDesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;
             blendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-            state.SetRTBlendState(0, blendDesc);
-            state.Bind(commandList, layout);
+            drawState.SetRTBlendState(0, blendDesc);
+            drawState.Bind(commandList, drawLayout);
 
-            commandList->OMSetRenderTargets(1, &Graphic::Get().GetCurrentRenderTargetHandle(), false, nullptr);
+            ShaderParameters drawParams;
+            drawParams.SetCBV(0, *constantBuffer);
+            drawParams.SetSRV(1, *particlesDataBuffer);
+            drawParams.SetSRV(2, *indicesBuffer);
+            drawParams.SetSRV(3, *texture);
+            drawParams.Bind<true>(commandList, drawLayout);
+
+            FLOAT clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+            commandList->ClearRenderTargetView(renderTarget->GetRTV(), clearColor, 0, nullptr);
+
+            std::array<D3D12_CPU_DESCRIPTOR_HANDLE, 1> rtvHandles = { renderTarget->GetRTV() };
+            commandList->OMSetRenderTargets(static_cast<uint32_t>(rtvHandles.size()), rtvHandles.data(), true, nullptr);
 
             MeshManager::Get().Bind(commandList, MeshType::Square);
-
-            ShaderParameters params;
-            params.SetCBV(0, *constantBuffer);
-            params.SetSRV(1, *particlesDataBuffer);
-            params.SetSRV(2, *indicesBuffer);
-            params.SetConstant(3, 0.5f);
-            params.Bind<true>(commandList);
-
+            
             commandList->ExecuteIndirect(Graphic::Get().GetDefaultDrawCommandSignature(), 1, drawIndirectBuffer->GetResource(), 0, nullptr, 0);
 
+            {
+                std::array< CD3DX12_RESOURCE_BARRIER, 1> barriers;
+                barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(Graphic::Get().GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+                commandList->ResourceBarrier(static_cast<uint32_t>(barriers.size()), barriers.data());
+            }
+
+            // Render on screen
+            ShaderParametersLayout screenLayout;
+            screenLayout.SetSRV(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+            screenLayout.SetStaticSampler(0, defaultSampler, D3D12_SHADER_VISIBILITY_PIXEL);
+
+            GraphicPipelineState screenState;
+            screenState.SetVS(L"vsscreen");
+            screenState.SetPS(L"psscreen");
+            screenState.Bind(commandList, screenLayout);
+            
+            ShaderParameters screenParams;
+            screenParams.SetSRV(0, *renderTarget);
+            screenParams.Bind<true>(commandList, screenLayout);
+            
+            MeshManager::Get().Bind(commandList, MeshType::Square);
+            
+            commandList->OMSetRenderTargets(1, &Graphic::Get().GetCurrentRenderTargetHandle(), false, nullptr);
+
+            MeshManager::Get().Draw(commandList, MeshType::Square, 1);
+            
             {
                 std::array< CD3DX12_RESOURCE_BARRIER, 1> barriers;
                 barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(Graphic::Get().GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -266,6 +331,8 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
 
     Engine::Get().PreShutdown();
 
+    texture.reset();
+    renderTarget.reset();
     dispatchIndirectBuffer.reset();
     drawIndirectBuffer.reset();
     emitterDataBuffer.reset();

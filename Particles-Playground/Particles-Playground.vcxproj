@@ -167,6 +167,11 @@
   <ItemGroup>
     <ClCompile Include="Graphics\camera.cpp" />
     <ClCompile Include="main.cpp" />
+    <FxCompile Include="Shaders\Source\psscreen.hlsl">
+      <FileType>Document</FileType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -183,8 +188,10 @@
     <ClCompile Include="System\meshmanager.cpp" />
     <ClCompile Include="System\pipelinestate.cpp" />
     <ClCompile Include="System\psomanager.cpp" />
+    <ClCompile Include="System\sampler.cpp" />
     <ClCompile Include="System\shaderparameters.cpp" />
     <ClCompile Include="System\shaderparameterslayout.cpp" />
+    <ClCompile Include="System\texture.cpp" />
     <ClCompile Include="System\window.cpp" />
     <ClCompile Include="Utilities\circularallocator.cpp" />
     <ClCompile Include="Utilities\linearallocator.cpp" />
@@ -192,6 +199,9 @@
   <ItemGroup>
     <ClInclude Include="Graphics\camera.h" />
     <ClInclude Include="Includes\d3dx12.h" />
+    <None Include="Shaders\Source\screen.hlsli">
+      <FileType>Document</FileType>
+    </None>
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="System\commandlist.h" />
     <ClInclude Include="System\cpudescriptorheap.h" />
@@ -205,8 +215,11 @@
     <ClInclude Include="System\meshmanager.h" />
     <ClInclude Include="System\pipelinestate.h" />
     <ClInclude Include="System\psomanager.h" />
+    <ClInclude Include="System\resource.h" />
+    <ClInclude Include="System\sampler.h" />
     <ClInclude Include="System\shaderparameters.h" />
     <ClInclude Include="System\shaderparameterslayout.h" />
+    <ClInclude Include="System\texture.h" />
     <ClInclude Include="System\vertexformats.h" />
     <ClInclude Include="System\window.h" />
     <ClInclude Include="Utilities\allocatorcommon.h" />
@@ -258,6 +271,13 @@
     <None Include="Shaders\Source\default.hlsli" />
     <None Include="System\shaderparameters.inl" />
     <None Include="Utilities\freelistallocator.inl" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shaders\Source\vsscreen.hlsl">
+      <FileType>Document</FileType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

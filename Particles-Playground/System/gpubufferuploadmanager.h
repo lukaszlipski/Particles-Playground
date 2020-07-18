@@ -48,7 +48,7 @@ public:
 
     void PreUpdate();
 
-    UploadBufferTemporaryRangeHandle Reserve(uint32_t size);
+    UploadBufferTemporaryRangeHandle Reserve(uint32_t size, uint32_t alignment = 1);
 
     inline ID3D12Resource* GetResource() const { return mUploadRes; }
 

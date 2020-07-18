@@ -1,8 +1,14 @@
 #pragma once
 
 class CommandList;
+class Sampler;
 
-using RootParameters = std::pair<std::vector<CD3DX12_ROOT_PARAMETER1>, std::list<CD3DX12_DESCRIPTOR_RANGE1>>;
+struct RootParameters
+{
+    std::vector<CD3DX12_ROOT_PARAMETER1> Parameters;
+    std::list<CD3DX12_DESCRIPTOR_RANGE1> Ranges;
+    std::vector<CD3DX12_STATIC_SAMPLER_DESC> StaticSamplers;
+};
 
 class ShaderParametersLayout
 {
@@ -29,11 +35,15 @@ public:
     ShaderParametersLayout& SetSRV(uint32_t idx, uint32_t regIdx, D3D12_SHADER_VISIBILITY visibility);
     ShaderParametersLayout& SetUAV(uint32_t idx, uint32_t regIdx, D3D12_SHADER_VISIBILITY visibility);
     ShaderParametersLayout& SetConstant(uint32_t idx, uint32_t regIdx, uint32_t size, D3D12_SHADER_VISIBILITY visibility);
+    ShaderParametersLayout& SetStaticSampler(uint32_t regIdx, Sampler& desc, D3D12_SHADER_VISIBILITY visibility);
 
-    uint32_t Hash() const;
-    RootParameters GetParameters() const;
+    [[nodiscard]] uint32_t Hash() const;
+    [[nodiscard]] RootParameters GetParameters() const;
 
+    D3D12_SHADER_VISIBILITY GetVisibilityForParameterIndex(uint32_t idx);
+    
 private:
     std::map<uint32_t, ParameterVar> mParams;
+    std::vector<CD3DX12_STATIC_SAMPLER_DESC> mStaticSamplers;
 
 };

@@ -1,5 +1,6 @@
 #pragma once
 #include "graphic.h"
+#include "resource.h"
 #include "gpubufferuploadmanager.h"
 
 class CommandList;
@@ -28,20 +29,13 @@ constexpr BufferUsage operator&(BufferUsage lhs, BufferUsage rhs) {
     return static_cast<BufferUsage>(static_cast<BufferUsageType>(lhs) & static_cast<BufferUsageType>(rhs));
 }
 
-class GPUBuffer
+class GPUBuffer : public ResourceBase
 {
 public:
     GPUBuffer(uint32_t elemSize, uint32_t numElems = 1, BufferUsage usage = BufferUsage::All);
 
     ~GPUBuffer();
 
-    GPUBuffer(const GPUBuffer&) = delete;
-    GPUBuffer& operator=(const GPUBuffer&) = delete;
-
-    GPUBuffer(GPUBuffer&& rhs);
-    GPUBuffer& operator=(GPUBuffer&& rhs);
-
-    inline ID3D12Resource* GetResource() const { return mResource; }
     inline uint32_t GetBufferSize() const { return mElemSize * mNumElems; }
     inline bool HasBufferUsage(BufferUsage usage) const { return static_cast<BufferUsageType>(mUsage & usage) == static_cast<BufferUsageType>(usage); }
     inline D3D12_RESOURCE_STATES GetCurrentResourceState() const { return GetResourceState(mCurrentUsage); }
@@ -54,7 +48,6 @@ public:
     D3D12_CPU_DESCRIPTOR_HANDLE GetSRV();
     D3D12_CPU_DESCRIPTOR_HANDLE GetUAV();
     void SetCurrentUsage(BufferUsage usage, std::vector<D3D12_RESOURCE_BARRIER>& barriers);
-    void SetDebugName(std::wstring_view name);
 
 private:
     D3D12_RESOURCE_STATES GetResourceState(BufferUsage usage) const;
@@ -64,7 +57,6 @@ private:
     uint32_t mMappedRangeEnd = 0;
     UploadBufferTemporaryRangeHandle mTemporaryMapResource = nullptr;
 
-    ID3D12Resource* mResource = nullptr;
     uint32_t mNumElems = 0;
     uint32_t mElemSize = 0;
     BufferUsage mUsage;

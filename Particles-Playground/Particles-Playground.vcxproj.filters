@@ -75,6 +75,12 @@
     <ClCompile Include="System\shaderparameterslayout.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="System\texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="System\sampler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -152,6 +158,15 @@
     <ClInclude Include="System\shaderparameterslayout.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="System\texture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="System\resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="System\sampler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\Source\psdefault.hlsl" />
@@ -159,6 +174,8 @@
     <FxCompile Include="Shaders\Source\update.hlsl" />
     <FxCompile Include="Shaders\Source\spawn.hlsl" />
     <FxCompile Include="Shaders\Source\emitterupdate.hlsl" />
+    <FxCompile Include="Shaders\Source\vsscreen.hlsl" />
+    <FxCompile Include="Shaders\Source\psscreen.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Source\default.hlsli" />
@@ -168,5 +185,6 @@
     <None Include="System\shaderparameters.inl">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="Shaders\Source\screen.hlsli" />
   </ItemGroup>
 </Project>

@@ -5,6 +5,8 @@
 #include "System/meshmanager.h"
 #include "System/commandlist.h"
 #include "System/gpubuffer.h"
+#include "System/texture.h"
+#include "System/sampler.h"
 #include "System/cpudescriptorheap.h"
 #include "System/gpudescriptorheap.h"
 #include "System/globaltimer.h"

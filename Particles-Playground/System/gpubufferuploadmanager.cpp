@@ -71,11 +71,11 @@ void GPUBufferUploadManager::PreUpdate()
 
 }
 
-UploadBufferTemporaryRangeHandle GPUBufferUploadManager::Reserve(uint32_t size)
+UploadBufferTemporaryRangeHandle GPUBufferUploadManager::Reserve(uint32_t size, uint32_t alignment)
 {
     ID3D12Device* const device = Graphic::Get().GetDevice();
 
-    Range alloc = mAllocator.Allocate(size);
+    Range alloc = mAllocator.Allocate(size, alignment);
     assert(alloc.IsValid());
 
     const uint64_t currentFrameNum = Graphic::Get().GetCurrentFrameNumber();

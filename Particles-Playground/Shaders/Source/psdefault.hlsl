@@ -1,9 +1,7 @@
 #include "default.hlsli"
 
-struct PSContants
-{
-    float x;
-};
+Texture2D<float4> Texture : register(t2, space0);
+SamplerState Sampler : register(s0, space0);
 
 float4 main(VSOutput input) : SV_TARGET
 {
@@ -11,5 +9,6 @@ float4 main(VSOutput input) : SV_TARGET
     float dist = distance(input.texCoord, float2(0.5f, 0.5f));
     float val = smoothstep(input.radius - delta, input.radius + delta, dist);
     float alpha = (1.0f - val) * input.color.a;
-    return float4(input.color.rgb, alpha);
+    float4 color = Texture.Sample(Sampler, input.texCoord);
+    return float4(color.rgb, alpha);
 }

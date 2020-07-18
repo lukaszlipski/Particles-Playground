@@ -91,6 +91,8 @@ private:
     std::unique_ptr<CPUDescriptorHeap> mCPUDescriptorHeapCBV;
     std::unique_ptr<GPUDescriptorHeap> mGPUDescriptorHeapCBV;
 
+    std::unique_ptr<CPUDescriptorHeap> mCPUDescriptorHeapRTV;
+
     std::array<ID3D12CommandAllocator*, mFrameCount> mDirectCommandAllocator;
     std::array<ID3D12CommandAllocator*, mFrameCount> mComputeCommandAllocator;
     std::array<ID3D12CommandAllocator*, mFrameCount> mCopyCommandAllocator;

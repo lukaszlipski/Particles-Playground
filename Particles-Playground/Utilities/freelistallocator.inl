@@ -60,13 +60,19 @@ Range FreeListAllocator<AllocStrategy>::Allocate(uint32_t size, uint32_t alignme
         return result;
     }
 
-    // #TODO(llipski): return range with a properly align start
-
-    result.Start = freeBlock->Start;
+    result.Start = Align(freeBlock->Start, alignment);
     result.Size = size;
 
-    freeBlock->Size -= size;
-    freeBlock->Start += size;
+    const uint64_t alignmentOffset = result.Start - freeBlock->Start;
+    assert(alignmentOffset >= 0);
+
+    if (alignmentOffset)
+    {
+        mFreeList.insert(freeBlock, { freeBlock->Start, alignmentOffset });
+    }
+
+    freeBlock->Size -= size + alignmentOffset;
+    freeBlock->Start += size + alignmentOffset;
 
     if (freeBlock->Size == 0)
     {
