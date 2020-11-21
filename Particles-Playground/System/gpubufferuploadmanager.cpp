@@ -3,7 +3,8 @@
 uint8_t* UploadBufferTemporaryRange::Map()
 {
     uint8_t* data = nullptr;
-    HRESULT res = GetResource()->Map(0, &CD3DX12_RANGE(mStartRange, mEndRange), reinterpret_cast<void**>(&data));
+    const CD3DX12_RANGE range(mStartRange, mEndRange);
+    HRESULT res = GetResource()->Map(0, &range, reinterpret_cast<void**>(&data));
     assert(SUCCEEDED(res));
 
     return data + mStartRange;
@@ -11,7 +12,8 @@ uint8_t* UploadBufferTemporaryRange::Map()
 
 void UploadBufferTemporaryRange::Unmap()
 {
-    GetResource()->Unmap(0, &CD3DX12_RANGE(mStartRange, mEndRange));
+    const CD3DX12_RANGE range(mStartRange, mEndRange);
+    GetResource()->Unmap(0, &range);
 }
 
 ID3D12Resource* UploadBufferTemporaryRange::GetResource() const
@@ -32,7 +34,8 @@ bool GPUBufferUploadManager::Startup()
     HRESULT res = device->CreateHeap(&heapProps, IID_PPV_ARGS(&mHeap));
     assert(SUCCEEDED(res));
 
-    res = device->CreatePlacedResource(mHeap, 0, &CD3DX12_RESOURCE_DESC::Buffer(UploadHeapSize), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mUploadRes));
+    const CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(UploadHeapSize);
+    res = device->CreatePlacedResource(mHeap, 0, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mUploadRes));
     assert(SUCCEEDED(res));
 
     return true;

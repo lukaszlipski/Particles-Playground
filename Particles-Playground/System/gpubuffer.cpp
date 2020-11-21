@@ -22,7 +22,8 @@ GPUBuffer::GPUBuffer(uint32_t elemSize, uint32_t numElems /*= 1*/, BufferUsage u
         desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
 
-    const HRESULT hr = device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &desc, GetCurrentResourceState(), nullptr, IID_PPV_ARGS(&mResource));
+    const CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_DEFAULT);
+    const HRESULT hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &desc, GetCurrentResourceState(), nullptr, IID_PPV_ARGS(&mResource));
     assert(SUCCEEDED(hr));
 
     CreateViews();
@@ -57,9 +58,12 @@ void GPUBuffer::Unmap(CommandList& cmdList)
 
     mTemporaryMapResource->Unmap();
 
-    cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mResource, GetCurrentResourceState(), D3D12_RESOURCE_STATE_COPY_DEST));
+    const CD3DX12_RESOURCE_BARRIER before = CD3DX12_RESOURCE_BARRIER::Transition(mResource, GetCurrentResourceState(), D3D12_RESOURCE_STATE_COPY_DEST);
+    const CD3DX12_RESOURCE_BARRIER after = CD3DX12_RESOURCE_BARRIER::Transition(mResource, D3D12_RESOURCE_STATE_COPY_DEST, GetCurrentResourceState());
+
+    cmdList->ResourceBarrier(1, &before);
     cmdList->CopyBufferRegion(mResource, mMappedRangeStart, mTemporaryMapResource->GetResource(), mTemporaryMapResource->GetStartRange(), mMappedRangeEnd - mMappedRangeStart);
-    cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mResource, D3D12_RESOURCE_STATE_COPY_DEST, GetCurrentResourceState()));
+    cmdList->ResourceBarrier(1, &after);
 
     mTemporaryMapResource = nullptr;
 }

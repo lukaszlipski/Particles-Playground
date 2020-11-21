@@ -312,7 +312,8 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
             
             MeshManager::Get().Bind(commandList, MeshType::Square);
             
-            commandList->OMSetRenderTargets(1, &Graphic::Get().GetCurrentRenderTargetHandle(), false, nullptr);
+            const CD3DX12_CPU_DESCRIPTOR_HANDLE rtHandle = Graphic::Get().GetCurrentRenderTargetHandle();
+            commandList->OMSetRenderTargets(1, &rtHandle, false, nullptr);
 
             MeshManager::Get().Draw(commandList, MeshType::Square, 1);
             
