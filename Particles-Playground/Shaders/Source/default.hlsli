@@ -49,3 +49,20 @@ struct EmitterData
     float spawnRate;
     float lifeTime;
 };
+
+struct EmitterConstantData
+{
+    uint maxParticles;
+    float spawnRate;
+    float lifeTime;
+    uint indicesOffset;    
+    float4 color;    
+};
+
+struct EmitterStatusData
+{
+    uint aliveParticles;
+    uint particlesToSpawn;
+    uint particlesToUpdate;
+    float spawnAccTime;
+};

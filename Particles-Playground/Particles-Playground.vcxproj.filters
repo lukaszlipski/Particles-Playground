@@ -81,6 +81,12 @@
     <ClCompile Include="System\sampler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\gpuparticlesystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\gpuemitter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -167,6 +173,12 @@
     <ClInclude Include="System\sampler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\gpuparticlesystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\gpuemitter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\Source\psdefault.hlsl" />
@@ -176,6 +188,7 @@
     <FxCompile Include="Shaders\Source\emitterupdate.hlsl" />
     <FxCompile Include="Shaders\Source\vsscreen.hlsl" />
     <FxCompile Include="Shaders\Source\psscreen.hlsl" />
+    <FxCompile Include="Shaders\Source\resetfreeindices.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Source\default.hlsli" />

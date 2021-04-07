@@ -166,6 +166,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Graphics\camera.cpp" />
+    <ClCompile Include="Graphics\gpuemitter.cpp" />
+    <ClCompile Include="Graphics\gpuparticlesystem.cpp" />
     <ClCompile Include="main.cpp" />
     <FxCompile Include="Shaders\Source\psscreen.hlsl">
       <FileType>Document</FileType>
@@ -198,6 +200,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\camera.h" />
+    <ClInclude Include="Graphics\gpuemitter.h" />
+    <ClInclude Include="Graphics\gpuparticlesystem.h" />
     <ClInclude Include="Includes\d3dx12.h" />
     <None Include="Shaders\Source\screen.hlsli">
       <FileType>Document</FileType>
@@ -231,6 +235,16 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\Source\emitterupdate.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Shaders\Source\resetfreeindices.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>

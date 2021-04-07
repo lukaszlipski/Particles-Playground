@@ -2,34 +2,47 @@
 
 struct EmitterUpdateConstants
 {
+    uint emittersCount;
     float deltaTime;
 };
 
 ConstantBuffer<EmitterUpdateConstants> Constants : register(b0, space0);
-RWStructuredBuffer<EmitterData> Emitter : register(u0, space0);
-RWStructuredBuffer<DrawIndirectArgs> DrawIndirectBuffer : register(u1, space0);
-RWStructuredBuffer<DispatchIndirectArgs> DispatchIndirectBuffer : register(u2, space0);
+StructuredBuffer<EmitterConstantData> EmitterConstant : register(t0, space0);
+StructuredBuffer<uint> EmitterIndexBuffer : register(t1, space0);
+RWStructuredBuffer<EmitterStatusData> EmitterStatus : register(u1, space0);
+RWStructuredBuffer<DrawIndirectArgs> DrawIndirectBuffer : register(u2, space0);
+RWStructuredBuffer<DispatchIndirectArgs> SpawnIndirectBuffer : register(u3, space0);
 
-[numthreads(1, 1, 1)]
+[numthreads(64, 1, 1)]
 void main( uint3 id : SV_DispatchThreadID )
 {
-    // Reset draw indirect buffer
-    DrawIndirectBuffer[0].instanceCount = 0;
+    if (id.x >= Constants.emittersCount)
+    {
+        return;
+    }
+
+    // Indirection to emitter's contant and status buffer
+    uint emitterIndex = EmitterIndexBuffer[id.x];
 
     // Update emitter data
-    Emitter[id.x].spawnAccTime += Constants.deltaTime;
+    EmitterStatus[emitterIndex].spawnAccTime += Constants.deltaTime;
 
-    uint freeCount = Emitter[id.x].maxParticles - Emitter[id.x].aliveParticles;
-    uint maxSpawnCount = floor(Emitter[id.x].spawnAccTime * Emitter[id.x].spawnRate);
+    uint freeCount = EmitterConstant[emitterIndex].maxParticles - EmitterStatus[emitterIndex].aliveParticles;
+    uint maxSpawnCount = floor(EmitterStatus[emitterIndex].spawnAccTime * EmitterConstant[emitterIndex].spawnRate);
 
-    Emitter[id.x].particlesToSpawn = min(freeCount, maxSpawnCount);
-    Emitter[id.x].spawnAccTime -= float(maxSpawnCount) / Emitter[id.x].spawnRate;
+    EmitterStatus[emitterIndex].particlesToSpawn = min(freeCount, maxSpawnCount);
+    EmitterStatus[emitterIndex].spawnAccTime -= float(maxSpawnCount) / EmitterConstant[id.x].spawnRate;
 
-    Emitter[id.x].aliveParticles += Emitter[id.x].particlesToSpawn; // Add the particles to spawn in advance so spawn shader doesn't have to
+    // Add the particles to spawn in advance so spawn shader doesn't have to
+    EmitterStatus[emitterIndex].aliveParticles += EmitterStatus[emitterIndex].particlesToSpawn;
+    EmitterStatus[emitterIndex].particlesToUpdate = EmitterStatus[emitterIndex].aliveParticles;
 
-    // Preapre dispatch indirect buffer
-    DispatchIndirectBuffer[0].threadGroupCountX = ceil(float(Emitter[id.x].particlesToSpawn) / 64.0f);
-    DispatchIndirectBuffer[0].threadGroupCountY = 1;
-    DispatchIndirectBuffer[0].threadGroupCountZ = 1;
+    // Preapre spawn indirect buffer
+    uint spawnDispatchNum = (EmitterStatus[emitterIndex].particlesToSpawn + 63) / 64;
+    SpawnIndirectBuffer[emitterIndex].threadGroupCountX = spawnDispatchNum;
+    SpawnIndirectBuffer[emitterIndex].threadGroupCountY = 1;
+    SpawnIndirectBuffer[emitterIndex].threadGroupCountZ = 1;
 
+    // Reset draw indirect buffer
+    DrawIndirectBuffer[emitterIndex].instanceCount = 0;
 }

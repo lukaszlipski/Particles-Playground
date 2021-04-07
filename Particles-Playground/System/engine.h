@@ -14,6 +14,7 @@
 #include "System/pipelinestate.h"
 #include "System/shaderparameterslayout.h"
 #include "Graphics/camera.h"
+#include "Graphics/gpuparticlesystem.h"
 #include "Utilities/memory.h"
 #include "Utilities/debug.h"
 
