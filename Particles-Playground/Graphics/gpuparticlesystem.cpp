@@ -68,6 +68,8 @@ void GPUParticleSystem::Update(CommandList& commandList)
 
 void GPUParticleSystem::UpdateDirtyEmitters(CommandList& commandList)
 {
+    PIXScopedEvent(commandList.Get(), 0, "UpdateDirtyEmitters");
+
     std::vector<GPUEmitterHandle> dirtyEmitters;
 
     for (std::unique_ptr<GPUEmitter>& emitter : mEmitters)
@@ -153,6 +155,8 @@ void GPUParticleSystem::UpdateDirtyEmitters(CommandList& commandList)
 
 void GPUParticleSystem::UpdateEmitters(CommandList& commandList, const std::vector<GPUEmitterHandle>& enabledEmitters)
 {
+    PIXScopedEvent(commandList.Get(), 0, "UpdateEmitters");
+
     const uint32_t enabledEmittersCount = static_cast<uint32_t>(enabledEmitters.size());
     uint32_t* emitterData = reinterpret_cast<uint32_t*>(mEmitterIndexBuffer->Map(0, enabledEmittersCount * sizeof(uint32_t)));
 
@@ -209,6 +213,8 @@ void GPUParticleSystem::UpdateEmitters(CommandList& commandList, const std::vect
 
 void GPUParticleSystem::SpawnParticles(CommandList& commandList, const std::vector<GPUEmitterHandle>& enabledEmitters)
 {
+    PIXScopedEvent(commandList.Get(), 0, "SpawnParticles");
+
     ShaderParametersLayout spawnLayout;
     spawnLayout.SetConstant(0, 0, 1, D3D12_SHADER_VISIBILITY_ALL);
     spawnLayout.SetSRV(1, 0, D3D12_SHADER_VISIBILITY_ALL);
@@ -249,6 +255,8 @@ void GPUParticleSystem::SpawnParticles(CommandList& commandList, const std::vect
 
 void GPUParticleSystem::UpdateParticles(CommandList& commandList, const std::vector<GPUEmitterHandle>& enabledEmitters)
 {
+    PIXScopedEvent(commandList.Get(), 0, "UpdateParticles");
+
     GlobalTimer& timer = Engine::Get().GetTimer();
 
     ShaderParametersLayout updateLayout;
@@ -301,6 +309,8 @@ void GPUParticleSystem::UpdateParticles(CommandList& commandList, const std::vec
 
 void GPUParticleSystem::DrawParticles(CommandList& commandList, GPUBuffer* cameraBuffer, Texture2D* renderTarget)
 {
+    PIXScopedEvent(commandList.Get(), 0, "DrawParticles");
+
     assert(cameraBuffer);
     assert(renderTarget);
 
