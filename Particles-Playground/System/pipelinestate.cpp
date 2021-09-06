@@ -40,13 +40,19 @@ GraphicPipelineState::GraphicPipelineState()
 
 GraphicPipelineState& GraphicPipelineState::SetVS(std::wstring_view name)
 {
-    mState.VS = CD3DX12_SHADER_BYTECODE(PSOManager::Get().GetShader(name));
+    ShaderHandle shader = ShaderManager::Get().GetShader(name, ShaderType::Vertex);
+    assert(shader);
+    mState.VS.pShaderBytecode = shader->GetBlob()->GetBufferPointer();
+    mState.VS.BytecodeLength = shader->GetBlob()->GetBufferSize();
     return *this;
 }
 
 GraphicPipelineState& GraphicPipelineState::SetPS(std::wstring_view name)
 {
-    mState.PS = CD3DX12_SHADER_BYTECODE(PSOManager::Get().GetShader(name));
+    ShaderHandle shader = ShaderManager::Get().GetShader(name, ShaderType::Pixel);
+    assert(shader);
+    mState.PS.pShaderBytecode = shader->GetBlob()->GetBufferPointer();
+    mState.PS.BytecodeLength = shader->GetBlob()->GetBufferSize();
     return *this;
 }
 
@@ -112,12 +118,19 @@ void GraphicPipelineState::Bind(CommandList& commandList, ShaderParametersLayout
 
 ComputePipelineState::ComputePipelineState()
 {
-    SetCS(L"csdefault");
 }
 
 ComputePipelineState& ComputePipelineState::SetCS(std::wstring_view name)
 {
-    mState.CS = CD3DX12_SHADER_BYTECODE(PSOManager::Get().GetShader(name));
+    ShaderHandle shader = ShaderManager::Get().GetShader(name, ShaderType::Compute);
+    return SetCS(shader);
+}
+
+ComputePipelineState& ComputePipelineState::SetCS(ShaderHandle shader)
+{
+    assert(shader);
+    mState.CS.pShaderBytecode = shader->GetBlob()->GetBufferPointer();
+    mState.CS.BytecodeLength = shader->GetBlob()->GetBufferSize();
     return *this;
 }
 
@@ -129,7 +142,7 @@ void ComputePipelineState::Bind(CommandList& commandList, ShaderParametersLayout
     ID3D12RootSignature* rootSig = psoManager.CompileShaderParameterLayout(layout);
     commandList->SetComputeRootSignature(rootSig);
 
-    // Update state's sturcture with a proper root signature
+    // Update state's structure with a proper root signature
     mState.pRootSignature = rootSig;
 
     // Get and set pipeline state based on provided parameters

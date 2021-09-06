@@ -225,7 +225,7 @@ void GPUParticleSystem::SpawnParticles(CommandList& commandList, const std::vect
     for (GPUEmitterHandle emitter : enabledEmitters)
     {
         ComputePipelineState spawnState;
-        spawnState.SetCS(L"spawn");
+        spawnState.SetCS(emitter->GetSpawnShader());
         spawnState.Bind(commandList, spawnLayout);
 
         ShaderParameters spawnParams;
@@ -279,7 +279,7 @@ void GPUParticleSystem::UpdateParticles(CommandList& commandList, const std::vec
     for (GPUEmitterHandle emitter : enabledEmitters)
     {
         ComputePipelineState updateState;
-        updateState.SetCS(L"update");
+        updateState.SetCS(emitter->GetUpdateShader());
         updateState.Bind(commandList, updateLayout);
 
         constants.emitterIndex = emitter->GetEmitterIndexGPU();

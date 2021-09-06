@@ -55,8 +55,9 @@ struct EmitterConstantData
     uint maxParticles;
     float spawnRate;
     float lifeTime;
-    uint indicesOffset;    
-    float4 color;    
+    uint indicesOffset;
+    float4 color;
+    float3 position;
 };
 
 struct EmitterStatusData

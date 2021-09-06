@@ -1,5 +1,6 @@
 #pragma once
 #include "Utilities\allocatorcommon.h"
+#include "System\shadermanager.h"
 
 // #TODO: implement SOA
 struct ParticleData
@@ -18,6 +19,7 @@ struct EmitterConstantData
     float LifeTime = 0;
     uint32_t IndicesOffset = 0;
     XMFLOAT4 Color = { 1, 1, 1, 1 };
+    XMFLOAT3 Position = { 0, 0, 0 };
 };
 
 struct EmitterStatusData
@@ -34,7 +36,7 @@ class CommandList;
 class GPUEmitter
 {
 public:
-    GPUEmitter() = default;
+    GPUEmitter();
     ~GPUEmitter();
 
     GPUEmitter(GPUEmitter&&) = default;
@@ -49,6 +51,9 @@ public:
     GPUEmitter& SetSpawnRate(float spawnRate);
     GPUEmitter& SetParticleLifeTime(float lifeTime);
     GPUEmitter& SetParticleColor(const XMFLOAT4& color);
+    GPUEmitter& SetPosition(const XMFLOAT3& position);
+    GPUEmitter& SetUpdateShader(std::string_view updateLogic);
+    GPUEmitter& SetSpawnShader(std::string_view spawnLogic);
 
     inline const EmitterConstantData& GetConstantData() const { return mConstantData; }
 
@@ -65,7 +70,13 @@ public:
     inline uint32_t GetEmitterIndexGPU() const { return static_cast<uint32_t>(mEmitterAllocation.Start); }
     inline uint32_t GetMaxParticles() const { return mConstantData.MaxParticles; }
 
+    inline ShaderHandle GetUpdateShader() const { return mUpdateShader; }
+    inline ShaderHandle GetSpawnShader() const { return mSpawnShader; }
+
 private:
+    ShaderHandle mUpdateShader = nullptr;
+    ShaderHandle mSpawnShader = nullptr;
+    
     EmitterConstantData mConstantData;
 
     Range mEmitterAllocation;

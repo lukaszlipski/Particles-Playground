@@ -21,7 +21,7 @@ RWStructuredBuffer<uint> FreeList : register(u2, space0);
 groupshared int ParticleGroupIndex;
 
 [numthreads(64, 1, 1)]
-void main( SpawnInput input )
+void main(SpawnInput input)
 {
     if (input.groupThreadID.x == 0)
     {
@@ -48,16 +48,10 @@ void main( SpawnInput input )
     FreeList[freeListIndex] = -1;
 
     ParticlesData particle;
-    
+
     // Spawn logic
     {
-        float phi = (float(particleIndex) / emitterConstant.maxParticles) * 3.14f;
-
-        particle.position = float3(0.0f, 0.0f, 0.0f);
-        particle.color = emitterConstant.color;
-        particle.lifeTime = emitterConstant.lifeTime;
-        particle.velocity = float3(cos(phi), sin(phi), 0) * 15.0f;
-        particle.scale = 1.0f;
+        TOKEN_SPAWN_LOGIC
     }
 
     Particles[offset + particleIndex] = particle;

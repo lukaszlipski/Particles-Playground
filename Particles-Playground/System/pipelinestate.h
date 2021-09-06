@@ -1,6 +1,7 @@
 #pragma once
 #include "Utilities/memory.h"
 #include "System/vertexformats.h"
+#include "System/shadermanager.h"
 
 class CommandList;
 class ShaderParametersLayout;
@@ -66,6 +67,7 @@ public:
     ComputePipelineState();
 
     ComputePipelineState& SetCS(std::wstring_view name);
+    ComputePipelineState& SetCS(ShaderHandle shader);
     void Bind(CommandList& commandList, ShaderParametersLayout& layout);
 
 };

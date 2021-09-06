@@ -15,7 +15,7 @@ RWStructuredBuffer<uint> FreeList : register(u3, space0);
 RWStructuredBuffer<DrawIndirectArgs> DrawIndirectArgs : register(u4, space0);
 
 [numthreads(64, 1, 1)]
-void main( uint3 id : SV_DispatchThreadID)
+void main(uint3 id : SV_DispatchThreadID)
 {
     uint emitterIndex = Constants.emitterIndex;
     EmitterConstantData emitterConstant = EmitterConstant[emitterIndex];
@@ -32,12 +32,7 @@ void main( uint3 id : SV_DispatchThreadID)
     {
         // Update logic
         {
-            particle.position += particle.velocity * Constants.deltaTime;
-            particle.velocity += float3(0, -9.8f, 0) * Constants.deltaTime;
-            //particle.scale;
-            particle.color.a = max(0.0f, particle.lifeTime / emitterConstant.lifeTime);
-
-            particle.lifeTime -= Constants.deltaTime;
+            TOKEN_UPDATE_LOGIC
         }
 
         Particles[offset + id.x] = particle;
@@ -58,5 +53,5 @@ void main( uint3 id : SV_DispatchThreadID)
         }
 
     }
-    
+
 }

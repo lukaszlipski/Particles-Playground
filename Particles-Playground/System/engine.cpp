@@ -5,6 +5,7 @@ void Engine::Startup()
 {
     Window::Get().Startup();
     Graphic::Get().Startup();
+    ShaderManager::Get().Startup();
     PSOManager::Get().Startup();
     GPUBufferUploadManager::Get().Startup();
     MeshManager::Get().Startup();
@@ -40,6 +41,7 @@ void Engine::Shutdown()
     MeshManager::Get().Shutdown();
     GPUBufferUploadManager::Get().Shutdown();
     PSOManager::Get().Shutdown();
+    ShaderManager::Get().Shutdown();
     Graphic::Get().Shutdown();
     Window::Get().Shutdown();
 }

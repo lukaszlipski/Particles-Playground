@@ -13,6 +13,7 @@
 #include "System/shaderparameters.h"
 #include "System/pipelinestate.h"
 #include "System/shaderparameterslayout.h"
+#include "System/shadermanager.h"
 #include "Graphics/camera.h"
 #include "Graphics/gpuparticlesystem.h"
 #include "Utilities/memory.h"

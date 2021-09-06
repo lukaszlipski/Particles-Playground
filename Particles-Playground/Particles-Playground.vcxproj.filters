@@ -87,6 +87,9 @@
     <ClCompile Include="Graphics\gpuemitter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="System\shadermanager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -179,16 +182,12 @@
     <ClInclude Include="Graphics\gpuemitter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="Shaders\Source\psdefault.hlsl" />
-    <FxCompile Include="Shaders\Source\vsdefault.hlsl" />
-    <FxCompile Include="Shaders\Source\update.hlsl" />
-    <FxCompile Include="Shaders\Source\spawn.hlsl" />
-    <FxCompile Include="Shaders\Source\emitterupdate.hlsl" />
-    <FxCompile Include="Shaders\Source\vsscreen.hlsl" />
-    <FxCompile Include="Shaders\Source\psscreen.hlsl" />
-    <FxCompile Include="Shaders\Source\resetfreeindices.hlsl" />
+    <ClInclude Include="System\shadermanager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\string.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Source\default.hlsli" />
@@ -200,5 +199,15 @@
     </None>
     <None Include="Shaders\Source\screen.hlsli" />
     <None Include="packages.config" />
+    <None Include="Shaders\default.hlsli" />
+    <None Include="Shaders\screen.hlsli" />
+    <None Include="Shaders\psdefault.hlsl" />
+    <None Include="Shaders\psscreen.hlsl" />
+    <None Include="Shaders\resetfreeindices.hlsl" />
+    <None Include="Shaders\emitterupdate.hlsl" />
+    <None Include="Shaders\vsdefault.hlsl" />
+    <None Include="Shaders\vsscreen.hlsl" />
+    <None Include="Shaders\updateTemplate.hlsl" />
+    <None Include="Shaders\spawnTemplate.hlsl" />
   </ItemGroup>
 </Project>

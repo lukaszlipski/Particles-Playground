@@ -37,14 +37,28 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     GPUParticleSystem gpuParticlesSystem;
     gpuParticlesSystem.Init();
 
-    GPUEmitterHandle emitter1 = gpuParticlesSystem.CreateEmitter(200);
-    emitter1->SetSpawnRate(10.0f).SetParticleLifeTime(2.0f).SetParticleColor({ 1,0,0,1 });
+    const char* updateLogic = "particle.position += particle.velocity * Constants.deltaTime;\n\
+    particle.velocity += float3(-2.0f, -9.8f, 0) * Constants.deltaTime;\n\
+    particle.color = lerp(float4(0,1,1,0), emitterConstant.color, particle.lifeTime / emitterConstant.lifeTime);\n\
+    particle.scale = max(0.05f, particle.lifeTime / emitterConstant.lifeTime);\n\
+    particle.lifeTime -= Constants.deltaTime;\n";
 
-    GPUEmitterHandle emitter2 = gpuParticlesSystem.CreateEmitter(400);
-    emitter2->SetSpawnRate(20.0f).SetParticleLifeTime(5.0f).SetParticleColor({ 0,1,0,1 });
+    const char* spawnLogic = "float phi = (float(particleIndex) / emitterConstant.maxParticles) * 3.14f; \n\
+    particle.position = float3(0.0f, 0.0f, 0.0f) + emitterConstant.position; \n\
+    particle.color = emitterConstant.color; \n\
+    particle.lifeTime = emitterConstant.lifeTime; \n\
+    particle.velocity = float3(cos(phi), sin(phi), 0) * 15.0f; \n\
+    particle.scale = 1.0f; \n";
 
-    GPUEmitterHandle emitter3 = gpuParticlesSystem.CreateEmitter(100);
-    emitter3->SetSpawnRate(5.0f).SetParticleLifeTime(3.0f).SetParticleColor({ 0,0,1,1 });
+    GPUEmitterHandle emitter1 = gpuParticlesSystem.CreateEmitter(800);
+    emitter1->SetSpawnRate(100.0f).SetParticleLifeTime(2.0f).SetParticleColor({ 1,0,0,1 }).SetPosition({ -30,0,0 });
+
+    GPUEmitterHandle emitter2 = gpuParticlesSystem.CreateEmitter(1000);
+    emitter2->SetSpawnRate(200.0f).SetParticleLifeTime(5.0f).SetParticleColor({ 0,1,0,1 }).SetPosition({ 0,0,0 });
+    emitter2->SetUpdateShader(updateLogic).SetSpawnShader(spawnLogic);
+
+    GPUEmitterHandle emitter3 = gpuParticlesSystem.CreateEmitter(2000);
+    emitter3->SetSpawnRate(500.0f).SetParticleLifeTime(3.0f).SetParticleColor({ 0,0,1,1 }).SetPosition({ 30,0,0 });
 
     std::unique_ptr<Texture2D> renderTarget = std::make_unique<Texture2D>(Window::Get().GetWidth(), Window::Get().GetHeight(), TextureFormat::R8G8B8A8, TextureUsage::RenderTarget | TextureUsage::ShaderResource);
     renderTarget->SetDebugName(L"TestRenderTarget");

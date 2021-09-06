@@ -20,11 +20,6 @@ bool PSOManager::Startup()
 
 bool PSOManager::Shutdown()
 {
-    for (auto& [key, shader] : mShaders)
-    {
-        shader->Release();
-    }
-
     for (auto& [key, pso] : mCachedPipelineStates)
     {
         pso->Release();
@@ -36,25 +31,6 @@ bool PSOManager::Shutdown()
     }
 
     return true;
-}
-
-ID3DBlob* PSOManager::GetShader(std::wstring_view name)
-{
-    const size_t key = std::hash<std::wstring_view>{}(name);
-    auto shaderIt = mShaders.find(key);
-
-    if (shaderIt != mShaders.end())
-    {
-        return shaderIt->second;
-    }
-
-    ID3DBlob* shader = nullptr;
-    const std::wstring fileName = SHADER_FOLDER + name.data() + L".cso";
-    HRESULT hr = D3DReadFileToBlob(fileName.c_str(), &shader);
-    assert(SUCCEEDED(hr));
-    mShaders[key] = shader;
-
-    return shader;
 }
 
 template<typename PipelineState>
