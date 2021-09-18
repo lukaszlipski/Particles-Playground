@@ -50,15 +50,19 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     particle.velocity = float3(cos(phi), sin(phi), 0) * 15.0f; \n\
     particle.scale = 1.0f; \n";
 
-    GPUEmitterHandle emitter1 = gpuParticlesSystem.CreateEmitter(800);
-    emitter1->SetSpawnRate(100.0f).SetParticleLifeTime(2.0f).SetParticleColor({ 1,0,0,1 }).SetPosition({ -30,0,0 });
+    GPUEmitterTemplateHandle emitterTemplateHandle = gpuParticlesSystem.CreateEmitterTemplate();
+    GPUEmitterTemplate* emitterTemplate = gpuParticlesSystem.GetEmitterTemplate(emitterTemplateHandle);
+    emitterTemplate->SetSpawnShader(spawnLogic);
+    emitterTemplate->SetUpdateShader(updateLogic);
 
-    GPUEmitterHandle emitter2 = gpuParticlesSystem.CreateEmitter(1000);
-    emitter2->SetSpawnRate(200.0f).SetParticleLifeTime(5.0f).SetParticleColor({ 0,1,0,1 }).SetPosition({ 0,0,0 });
-    emitter2->SetUpdateShader(updateLogic).SetSpawnShader(spawnLogic);
-
-    GPUEmitterHandle emitter3 = gpuParticlesSystem.CreateEmitter(2000);
-    emitter3->SetSpawnRate(500.0f).SetParticleLifeTime(3.0f).SetParticleColor({ 0,0,1,1 }).SetPosition({ 30,0,0 });
+    GPUEmitterHandle emitter1 = gpuParticlesSystem.CreateEmitter(emitterTemplateHandle, 800);
+    gpuParticlesSystem.GetEmitter(emitter1)->SetSpawnRate(100.0f).SetParticleLifeTime(2.0f).SetParticleColor({ 1,0,0,1 }).SetPosition({ -30,0,0 });
+    
+    GPUEmitterHandle emitter2 = gpuParticlesSystem.CreateEmitter(emitterTemplateHandle, 1000);
+    gpuParticlesSystem.GetEmitter(emitter2)->SetSpawnRate(200.0f).SetParticleLifeTime(5.0f).SetParticleColor({ 0,1,0,1 }).SetPosition({ 0,0,0 });
+    
+    GPUEmitterHandle emitter3 = gpuParticlesSystem.CreateEmitter(emitterTemplateHandle, 2000);
+    gpuParticlesSystem.GetEmitter(emitter3)->SetSpawnRate(500.0f).SetParticleLifeTime(3.0f).SetParticleColor({ 0,0,1,1 }).SetPosition({ 30,0,0 });
 
     std::unique_ptr<Texture2D> renderTarget = std::make_unique<Texture2D>(Window::Get().GetWidth(), Window::Get().GetHeight(), TextureFormat::R8G8B8A8, TextureUsage::RenderTarget | TextureUsage::ShaderResource);
     renderTarget->SetDebugName(L"TestRenderTarget");
@@ -165,6 +169,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     gpuParticlesSystem.FreeEmitter(emitter1);
     gpuParticlesSystem.FreeEmitter(emitter2);
     gpuParticlesSystem.FreeEmitter(emitter3);
+    gpuParticlesSystem.FreeEmitterTemplate(emitterTemplateHandle);
 
     Engine::Get().PreShutdown();
 

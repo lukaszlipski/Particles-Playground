@@ -1,15 +1,18 @@
-#include "gpuparticlesystem.h"
+#include "Graphics/gpuparticlesystem.h"
 #include "System/engine.h"
 
 GPUParticleSystem::GPUParticleSystem() 
-    : mParticlesAllocator(0, MaxParticles), mEmittersAllocator(0, MaxEmitters)
+    : mParticlesAllocator(0, MaxParticles)
+    , mEmittersPool(MaxEmitters)
+    , mEmitterTemplatesPool(MaxEmitterTemplates)
 {
 
 }
 
 void GPUParticleSystem::Init()
 {
-    mEmitters.reserve(MaxEmitters);
+    mEmittersPool.Init();
+    mEmitterTemplatesPool.Init();
 
     mParticlesDataBuffer = std::make_unique<GPUBuffer>(static_cast<uint32_t>(sizeof(ParticleData)), MaxParticles, BufferUsage::Structured | BufferUsage::UnorderedAccess);
     mParticlesDataBuffer->SetDebugName(L"ParticlesDataBuffer");
@@ -38,6 +41,9 @@ void GPUParticleSystem::Init()
 
 void GPUParticleSystem::Free()
 {
+    mEmitterTemplatesPool.Free();
+    mEmittersPool.Free();
+
     mSpawnIndirectBuffer.reset();
     mDrawIndirectBuffer.reset();
     mEmitterConstantBuffer.reset();
@@ -52,15 +58,10 @@ void GPUParticleSystem::Update(CommandList& commandList)
 {
     UpdateDirtyEmitters(commandList);
 
-    std::vector<GPUEmitterHandle> enabledEmitters;
-    for (std::unique_ptr<GPUEmitter>& emitter : mEmitters)
-    {
-        if (emitter->GetEnabled())
-        {
-            enabledEmitters.push_back(emitter.get());
-        }
-    }
-
+    std::vector<GPUEmitter*> enabledEmitters = mEmittersPool.GetObjects([](GPUEmitter* emitter){
+        return emitter->GetEnabled();   
+    });
+    
     UpdateEmitters(commandList, enabledEmitters);
     SpawnParticles(commandList, enabledEmitters);
     UpdateParticles(commandList, enabledEmitters);
@@ -70,29 +71,25 @@ void GPUParticleSystem::UpdateDirtyEmitters(CommandList& commandList)
 {
     PIXScopedEvent(commandList.Get(), 0, "UpdateDirtyEmitters");
 
-    std::vector<GPUEmitterHandle> dirtyEmitters;
-
-    for (std::unique_ptr<GPUEmitter>& emitter : mEmitters)
-    {
+    std::vector<GPUEmitter*> dirtyEmitters = mEmittersPool.GetObjects([](GPUEmitter* emitter){
         if (emitter->GetDirty())
         {
-            assert(emitter->GetEmitterAllocation().IsValid());
             assert(emitter->GetParticleAllocation().IsValid());
-
-            dirtyEmitters.push_back(emitter.get());
-
-            emitter->ClearDirty();
+            return true;
         }
-    }
+        return false;
+    });
 
     if (dirtyEmitters.size() == 0)
         return;
-    
+
     // Update Emitter's Constant buffer and reset Indirect Draw entry
-    for (GPUEmitterHandle emitter : dirtyEmitters)
+    for (GPUEmitter* emitter : dirtyEmitters)
     {
-        const uint32_t offset = static_cast<uint32_t>(emitter->GetEmitterAllocation().Start) * sizeof(EmitterConstantData);
-        const uint32_t size = static_cast<uint32_t>(emitter->GetEmitterAllocation().Size) * sizeof(EmitterConstantData);
+        emitter->ClearDirty();
+
+        const uint32_t offset = emitter->GetEmitterIndexGPU() * sizeof(EmitterConstantData);
+        const uint32_t size = sizeof(EmitterConstantData);
 
         uint8_t* data = mEmitterConstantBuffer->Map(offset, offset + size);
 
@@ -102,8 +99,8 @@ void GPUParticleSystem::UpdateDirtyEmitters(CommandList& commandList)
 
         mEmitterConstantBuffer->Unmap(commandList);
 
-        const uint32_t ioffset = static_cast<uint32_t>(emitter->GetEmitterAllocation().Start) * sizeof(D3D12_DRAW_INDEXED_ARGUMENTS);
-        const uint32_t isize = static_cast<uint32_t>(emitter->GetEmitterAllocation().Size) * sizeof(D3D12_DRAW_INDEXED_ARGUMENTS);
+        const uint32_t ioffset = emitter->GetEmitterIndexGPU() * sizeof(D3D12_DRAW_INDEXED_ARGUMENTS);
+        const uint32_t isize = sizeof(D3D12_DRAW_INDEXED_ARGUMENTS);
 
         data = mDrawIndirectBuffer->Map(ioffset, ioffset + isize);
         memset(data, 0, sizeof(D3D12_DRAW_INDEXED_ARGUMENTS));
@@ -126,7 +123,7 @@ void GPUParticleSystem::UpdateDirtyEmitters(CommandList& commandList)
     resetFreeIndicesState.Bind(commandList, resetFreeIndicesLayout);
 
     // Reset free indices buffer
-    for (GPUEmitterHandle emitter : dirtyEmitters)
+    for (GPUEmitter* emitter : dirtyEmitters)
     {
         const uint32_t offset = static_cast<uint32_t>(emitter->GetParticleAllocation().Start);
         const uint32_t size = static_cast<uint32_t>(emitter->GetParticleAllocation().Size);
@@ -153,7 +150,7 @@ void GPUParticleSystem::UpdateDirtyEmitters(CommandList& commandList)
     }
 }
 
-void GPUParticleSystem::UpdateEmitters(CommandList& commandList, const std::vector<GPUEmitterHandle>& enabledEmitters)
+void GPUParticleSystem::UpdateEmitters(CommandList& commandList, const std::vector<GPUEmitter*>& enabledEmitters)
 {
     PIXScopedEvent(commandList.Get(), 0, "UpdateEmitters");
 
@@ -162,9 +159,8 @@ void GPUParticleSystem::UpdateEmitters(CommandList& commandList, const std::vect
 
     for (uint32_t i = 0; i < enabledEmitters.size(); ++i)
     {
-        GPUEmitterHandle emitter = enabledEmitters[i];
-        assert(emitter->GetEmitterAllocation().IsValid());
-        emitterData[i] = static_cast<uint32_t>(emitter->GetEmitterAllocation().Start);
+        GPUEmitter* emitter = enabledEmitters[i];
+        emitterData[i] = emitter->GetEmitterIndexGPU();
     }
 
     mEmitterIndexBuffer->Unmap(commandList);
@@ -211,7 +207,7 @@ void GPUParticleSystem::UpdateEmitters(CommandList& commandList, const std::vect
     }
 }
 
-void GPUParticleSystem::SpawnParticles(CommandList& commandList, const std::vector<GPUEmitterHandle>& enabledEmitters)
+void GPUParticleSystem::SpawnParticles(CommandList& commandList, const std::vector<GPUEmitter*>& enabledEmitters)
 {
     PIXScopedEvent(commandList.Get(), 0, "SpawnParticles");
 
@@ -222,10 +218,12 @@ void GPUParticleSystem::SpawnParticles(CommandList& commandList, const std::vect
     spawnLayout.SetUAV(3, 1, D3D12_SHADER_VISIBILITY_ALL);
     spawnLayout.SetUAV(4, 2, D3D12_SHADER_VISIBILITY_ALL);
 
-    for (GPUEmitterHandle emitter : enabledEmitters)
+    for (GPUEmitter* emitter : enabledEmitters)
     {
+        GPUEmitterTemplate* emitterTemplate = GetEmitterTemplate(emitter->GetTemplateHandle());
+
         ComputePipelineState spawnState;
-        spawnState.SetCS(emitter->GetSpawnShader());
+        spawnState.SetCS(emitterTemplate->GetSpawnShader());
         spawnState.Bind(commandList, spawnLayout);
 
         ShaderParameters spawnParams;
@@ -253,7 +251,7 @@ void GPUParticleSystem::SpawnParticles(CommandList& commandList, const std::vect
 
 }
 
-void GPUParticleSystem::UpdateParticles(CommandList& commandList, const std::vector<GPUEmitterHandle>& enabledEmitters)
+void GPUParticleSystem::UpdateParticles(CommandList& commandList, const std::vector<GPUEmitter*>& enabledEmitters)
 {
     PIXScopedEvent(commandList.Get(), 0, "UpdateParticles");
 
@@ -276,10 +274,12 @@ void GPUParticleSystem::UpdateParticles(CommandList& commandList, const std::vec
 
     constants.deltaTime = timer.GetDeltaTime();
 
-    for (GPUEmitterHandle emitter : enabledEmitters)
+    for (GPUEmitter* emitter : enabledEmitters)
     {
+        GPUEmitterTemplate* emitterTemplate = GetEmitterTemplate(emitter->GetTemplateHandle());
+
         ComputePipelineState updateState;
-        updateState.SetCS(emitter->GetUpdateShader());
+        updateState.SetCS(emitterTemplate->GetUpdateShader());
         updateState.Bind(commandList, updateLayout);
 
         constants.emitterIndex = emitter->GetEmitterIndexGPU();
@@ -341,7 +341,8 @@ void GPUParticleSystem::DrawParticles(CommandList& commandList, GPUBuffer* camer
     commandList->OMSetRenderTargets(static_cast<uint32_t>(rtvHandles.size()), rtvHandles.data(), true, nullptr);
     MeshManager::Get().Bind(commandList, MeshType::Square);
 
-    for (std::unique_ptr<GPUEmitter>& emitter : mEmitters)
+    std::vector<GPUEmitter*> emitters = mEmittersPool.GetObjects();
+    for (GPUEmitter* emitter : emitters)
     {
         const uint32_t constant = static_cast<uint32_t>(emitter->GetParticleAllocation().Start);
 
@@ -356,34 +357,4 @@ void GPUParticleSystem::DrawParticles(CommandList& commandList, GPUBuffer* camer
         const uint32_t drawOffset = emitter->GetEmitterIndexGPU() * sizeof(D3D12_DRAW_INDEXED_ARGUMENTS);
         commandList->ExecuteIndirect(Graphic::Get().GetDefaultDrawCommandSignature(), 1, mDrawIndirectBuffer->GetResource(), drawOffset, nullptr, 0);
     }
-}
-
-GPUEmitterHandle GPUParticleSystem::CreateEmitter(uint32_t maxParticles)
-{
-    if (mEmitters.size() >= MaxEmitters) { return nullptr; }
-
-    std::unique_ptr<GPUEmitter>& emitter = mEmitters.emplace_back(std::make_unique<GPUEmitter>());
-    GPUEmitterHandle handle = emitter.get();
-
-    handle->AllocateResources(maxParticles, *this);
-
-    return handle;
-}
-
-void GPUParticleSystem::FreeEmitter(GPUEmitterHandle& handle)
-{
-    if (!handle) { return; }
-
-    auto it = std::find_if(mEmitters.begin(), mEmitters.end(), [handle](std::unique_ptr<GPUEmitter>& emitter) {
-        return emitter.get() == handle;
-        });
-
-    if (it != mEmitters.end())
-    {
-        GPUEmitterHandle handle = it->get();
-        handle->FreeResources(*this);
-        mEmitters.erase(it);
-    }
-
-    handle = nullptr;
 }

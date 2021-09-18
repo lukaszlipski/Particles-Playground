@@ -33,6 +33,7 @@ public:
 
     virtual Range Allocate(uint32_t size, uint32_t alignment = 1) = 0;
     virtual void Free(Range& range) = 0;
+    inline uint32_t GetAllocationNum() const { return mAllocationNum; }
 
 protected:
     uint64_t mStartRange = 0;

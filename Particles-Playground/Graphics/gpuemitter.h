@@ -1,6 +1,6 @@
 #pragma once
-#include "Utilities\allocatorcommon.h"
-#include "System\shadermanager.h"
+#include "Graphics/gpuemittertemplate.h"
+#include "Utilities/objectpool.h"
 
 // #TODO: implement SOA
 struct ParticleData
@@ -33,27 +33,22 @@ struct EmitterStatusData
 class GPUParticleSystem;
 class CommandList;
 
-class GPUEmitter
+class GPUEmitter : public IObject<GPUEmitter>
 {
 public:
-    GPUEmitter();
+    GPUEmitter(GPUParticleSystem* particleSystem, GPUEmitterTemplateHandle emitterTemplate, uint32_t maxParticles);
     ~GPUEmitter();
 
-    GPUEmitter(GPUEmitter&&) = default;
-    GPUEmitter& operator=(GPUEmitter&&) = default;
+    GPUEmitter(GPUEmitter&&) = delete;
+    GPUEmitter& operator=(GPUEmitter&&) = delete;
 
     GPUEmitter(const GPUEmitter&) = delete;
     GPUEmitter& operator=(const GPUEmitter&) = delete;
-
-    void AllocateResources(uint32_t maxParticles, GPUParticleSystem& particleSystem);
-    void FreeResources(GPUParticleSystem& particleSystem);
 
     GPUEmitter& SetSpawnRate(float spawnRate);
     GPUEmitter& SetParticleLifeTime(float lifeTime);
     GPUEmitter& SetParticleColor(const XMFLOAT4& color);
     GPUEmitter& SetPosition(const XMFLOAT3& position);
-    GPUEmitter& SetUpdateShader(std::string_view updateLogic);
-    GPUEmitter& SetSpawnShader(std::string_view spawnLogic);
 
     inline const EmitterConstantData& GetConstantData() const { return mConstantData; }
 
@@ -64,26 +59,25 @@ public:
     inline void SetDitry() { mDirty = true; }
     inline void ClearDirty() { mDirty = false; }
 
-    inline Range& GetEmitterAllocation() { return mEmitterAllocation; }
-    inline Range& GetParticleAllocation() { return mParticleAllocation; }
+    inline void SetTemplateHandle(GPUEmitterTemplateHandle handle) { mTemplateHandle = handle; }
+    inline GPUEmitterTemplateHandle GetTemplateHandle() const { return mTemplateHandle; }
 
-    inline uint32_t GetEmitterIndexGPU() const { return static_cast<uint32_t>(mEmitterAllocation.Start); }
+    inline Range GetParticleAllocation() const { return mParticleAllocation; }
+
+    inline uint32_t GetEmitterIndexGPU() const { return GetIndex(); }
     inline uint32_t GetMaxParticles() const { return mConstantData.MaxParticles; }
 
-    inline ShaderHandle GetUpdateShader() const { return mUpdateShader; }
-    inline ShaderHandle GetSpawnShader() const { return mSpawnShader; }
-
 private:
-    ShaderHandle mUpdateShader = nullptr;
-    ShaderHandle mSpawnShader = nullptr;
-    
+    GPUEmitterTemplateHandle mTemplateHandle;
+    GPUParticleSystem* mParticleSystem = nullptr;
+
     EmitterConstantData mConstantData;
 
-    Range mEmitterAllocation;
     Range mParticleAllocation;
 
     bool mDirty = true;
     bool mEnabled = true;
 };
 
-using GPUEmitterHandle = GPUEmitter*;
+using GPUEmitterHandle = ObjectHandle<GPUEmitter>;
+

@@ -90,6 +90,9 @@
     <ClCompile Include="System\shadermanager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\gpuemittertemplate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -188,6 +191,12 @@
     <ClInclude Include="Utilities\string.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\gpuemittertemplate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\objectpool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Source\default.hlsli" />
@@ -209,5 +218,8 @@
     <None Include="Shaders\vsscreen.hlsl" />
     <None Include="Shaders\updateTemplate.hlsl" />
     <None Include="Shaders\spawnTemplate.hlsl" />
+    <None Include="Utilities\objectpool.inl">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
