@@ -5,7 +5,7 @@ Fence::Fence()
 {
     ID3D12Device* device = Graphic::Get().GetDevice();
     HRESULT result = device->CreateFence(mValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence));
-    assert(SUCCEEDED(result));
+    Assert(SUCCEEDED(result));
     mEvent = CreateEvent(nullptr, false, false, nullptr);
 }
 
@@ -43,7 +43,7 @@ void Fence::Flush(QueueType type)
 void Fence::Signal(QueueType type)
 {
     ID3D12CommandQueue* queue = Graphic::Get().GetQueue(type);
-    assert(queue);
+    Assert(queue);
 
     ++mValue;
     queue->Signal(mFence, mValue);
@@ -52,7 +52,7 @@ void Fence::Signal(QueueType type)
 void Fence::Wait(QueueType type)
 {
     ID3D12CommandQueue* queue = Graphic::Get().GetQueue(type);
-    assert(queue);
+    Assert(queue);
 
     queue->Wait(mFence, mValue);
 }

@@ -17,7 +17,7 @@ template<typename ObjectType>
 void ObjectPool<ObjectType>::Free()
 {
     // Make sure all objects were properly cleanup before calling the Free function
-    assert(std::none_of(mValidObjects.cbegin(), mValidObjects.cend(), [](bool elem) { return elem; }));
+    Assert(std::none_of(mValidObjects.cbegin(), mValidObjects.cend(), [](bool elem) { return elem; }));
 
     std::free(mObjectMemory);
     mObjectMemory = nullptr;
@@ -28,7 +28,7 @@ template<typename... Args>
 ObjectHandle<ObjectType> ObjectPool<ObjectType>::AllocateObject(Args&&... args)
 {
     Range allocation = mAllocator.Allocate(1);
-    assert(allocation.IsValid());
+    Assert(allocation.IsValid());
 
     // Convert allocation to index
     const IndexType index = static_cast<IndexType>(allocation.Start);
@@ -48,7 +48,7 @@ void ObjectPool<ObjectType>::FreeObject(ObjectHandle<ObjectType>& handle)
 {
     if (handle.GetHandle() == ObjectHandle<ObjectType>::Invalid) { return; }
 
-    assert(ValidateHandle(handle));
+    Assert(ValidateHandle(handle));
 
     // Call destructor on the object
     ObjectType& object = mObjectMemory[handle.GetIndex()];
@@ -73,7 +73,7 @@ void ObjectPool<ObjectType>::FreeObject(ObjectHandle<ObjectType>& handle)
 template<typename ObjectType>
 ObjectType* ObjectPool<ObjectType>::GetObject(ObjectHandle<ObjectType> handle)
 {
-    assert(ValidateHandle(handle));
+    Assert(ValidateHandle(handle));
 
     ObjectType& object = mObjectMemory[handle.GetIndex()];
     return &object;

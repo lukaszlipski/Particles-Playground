@@ -26,7 +26,7 @@ GPUDescriptorHeap::~GPUDescriptorHeap()
 GPUDescriptorHandle GPUDescriptorHeap::Allocate(uint32_t size /*= 1*/)
 {
     Range alloc = mAllocator.Allocate(size);
-    assert(alloc.IsValid()); // not enough descriptors
+    Assert(alloc.IsValid()); // not enough descriptors
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(mHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<uint32_t>(alloc.Start), Graphic::Get().GetHandleSize(mType));
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(mHeap->GetGPUDescriptorHandleForHeapStart(), static_cast<uint32_t>(alloc.Start), Graphic::Get().GetHandleSize(mType));
@@ -90,7 +90,7 @@ GPUDescriptorHandle::GPUDescriptorHandle(GPUDescriptorHandle&& rhs)
 
 GPUDescriptorHandle::~GPUDescriptorHandle()
 {
-    assert(!mAllocation.IsValid());
+    Assert(!mAllocation.IsValid());
 }
 
 GPUDescriptorHandleScoped::~GPUDescriptorHandleScoped()

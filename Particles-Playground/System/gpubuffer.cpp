@@ -24,7 +24,7 @@ GPUBuffer::GPUBuffer(uint32_t elemSize, uint32_t numElems /*= 1*/, BufferUsage u
 
     const CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_DEFAULT);
     const HRESULT hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &desc, GetCurrentResourceState(), nullptr, IID_PPV_ARGS(&mResource));
-    assert(SUCCEEDED(hr));
+    Assert(SUCCEEDED(hr));
 
     CreateViews();
 
@@ -32,13 +32,13 @@ GPUBuffer::GPUBuffer(uint32_t elemSize, uint32_t numElems /*= 1*/, BufferUsage u
 
 D3D12_GPU_VIRTUAL_ADDRESS GPUBuffer::GetGPUAddress(uint32_t elemIdx)
 {
-    assert(elemIdx < mNumElems);
+    Assert(elemIdx < mNumElems);
     return mResource->GetGPUVirtualAddress() + elemIdx * mElemSize;
 }
 
 uint8_t* GPUBuffer::Map(uint32_t start, uint32_t end)
 {
-    assert(!mTemporaryMapResource); // Tried to map twice
+    Assert(!mTemporaryMapResource); // Tried to map twice
 
     mMappedRangeStart = start;
     mMappedRangeEnd = end;
@@ -54,7 +54,7 @@ uint8_t* GPUBuffer::Map()
 
 void GPUBuffer::Unmap(CommandList& cmdList)
 {
-    assert(mTemporaryMapResource); // Tried to unmap without mapping
+    Assert(mTemporaryMapResource); // Tried to unmap without mapping
 
     mTemporaryMapResource->Unmap();
 
@@ -70,7 +70,7 @@ void GPUBuffer::Unmap(CommandList& cmdList)
 
 D3D12_RESOURCE_STATES GPUBuffer::GetResourceState(BufferUsage usage) const
 {
-    assert(IsPow2(static_cast<BufferUsageType>(usage))); // Only one bit can be set
+    Assert(IsPow2(static_cast<BufferUsageType>(usage))); // Only one bit can be set
 
     switch (usage)
     {
@@ -89,7 +89,7 @@ D3D12_RESOURCE_STATES GPUBuffer::GetResourceState(BufferUsage usage) const
     case BufferUsage::All:
         return D3D12_RESOURCE_STATE_GENERIC_READ;
     default:
-        assert(0);
+        Assert(0);
     }
     return D3D12_RESOURCE_STATE_GENERIC_READ;
 }
@@ -138,26 +138,26 @@ void GPUBuffer::CreateViews()
 
 D3D12_CPU_DESCRIPTOR_HANDLE GPUBuffer::GetCBV()
 {
-    assert(HasBufferUsage(BufferUsage::Constant));
+    Assert(HasBufferUsage(BufferUsage::Constant));
     return *mCBVHandle;
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE GPUBuffer::GetSRV()
 {
-    assert(HasBufferUsage(BufferUsage::Structured));
+    Assert(HasBufferUsage(BufferUsage::Structured));
     return *mSRVHandle;
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE GPUBuffer::GetUAV()
 {
-    assert(HasBufferUsage(BufferUsage::UnorderedAccess));
+    Assert(HasBufferUsage(BufferUsage::UnorderedAccess));
     return *mUAVHandle;
 }
 
 void GPUBuffer::SetCurrentUsage(BufferUsage usage, std::vector<D3D12_RESOURCE_BARRIER>& barriers)
 {
-    assert(IsPow2(static_cast<BufferUsageType>(usage))); // Only one bit can be set
-    assert(HasBufferUsage(usage));
+    Assert(IsPow2(static_cast<BufferUsageType>(usage))); // Only one bit can be set
+    Assert(HasBufferUsage(usage));
 
     const D3D12_RESOURCE_STATES stateBefore = GetResourceState(mCurrentUsage);
     const D3D12_RESOURCE_STATES stateAfter = GetResourceState(usage);

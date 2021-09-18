@@ -5,7 +5,7 @@ uint8_t* UploadBufferTemporaryRange::Map()
     uint8_t* data = nullptr;
     const CD3DX12_RANGE range(mStartRange, mEndRange);
     HRESULT res = GetResource()->Map(0, &range, reinterpret_cast<void**>(&data));
-    assert(SUCCEEDED(res));
+    Assert(SUCCEEDED(res));
 
     return data + mStartRange;
 }
@@ -32,11 +32,11 @@ bool GPUBufferUploadManager::Startup()
     heapProps.SizeInBytes = UploadHeapSize;
 
     HRESULT res = device->CreateHeap(&heapProps, IID_PPV_ARGS(&mHeap));
-    assert(SUCCEEDED(res));
+    Assert(SUCCEEDED(res));
 
     const CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(UploadHeapSize);
     res = device->CreatePlacedResource(mHeap, 0, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mUploadRes));
-    assert(SUCCEEDED(res));
+    Assert(SUCCEEDED(res));
 
     return true;
 }
@@ -79,7 +79,7 @@ UploadBufferTemporaryRangeHandle GPUBufferUploadManager::Reserve(uint32_t size, 
     ID3D12Device* const device = Graphic::Get().GetDevice();
 
     Range alloc = mAllocator.Allocate(size, alignment);
-    assert(alloc.IsValid());
+    Assert(alloc.IsValid());
 
     const uint64_t currentFrameNum = Graphic::Get().GetCurrentFrameNumber();
     mAllocations.push_back({ alloc.Start, alloc.Size, currentFrameNum });

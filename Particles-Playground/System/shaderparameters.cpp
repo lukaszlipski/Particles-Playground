@@ -84,7 +84,7 @@ void ShaderParameters::Bind(CommandList& commandList, ShaderParametersLayout& la
                         cpuHandle = resource->GetUAV(); 
                         break; 
                     }
-                    default: { assert(false); }
+                    default: { Assert(false); }
                 }
 
             }
@@ -103,10 +103,10 @@ void ShaderParameters::Bind(CommandList& commandList, ShaderParametersLayout& la
                     cpuHandle = resource->GetSRV();
                     break; 
                 }
-                default: { assert(false); }
+                default: { Assert(false); }
                 }
             }
-            else { assert(false); }
+            else { Assert(false); }
 
             GPUDescriptorHandleScoped gpuHandle = Graphic::Get().GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Allocate();
             Graphic::Get().GetDevice()->CopyDescriptorsSimple(1, gpuHandle, cpuHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);

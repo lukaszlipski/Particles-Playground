@@ -24,7 +24,7 @@ public:
 
     inline void SetDebugName(std::wstring_view name)
     {
-        assert(mResource);
+        Assert(mResource);
         mResource->SetName(name.data());
     }
 

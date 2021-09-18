@@ -37,7 +37,7 @@ bool ShaderManager::Shutdown()
 
 ShaderHandle ShaderManager::GetShader(std::wstring_view shaderName, ShaderType type, std::wstring_view entry, uint32_t instanceID, ShaderTokens tokens)
 {
-    assert(shaderName.size());
+    Assert(shaderName.size());
 
     const size_t key = GetShaderKey(shaderName, instanceID);
     auto shaderIt = mShaders.find(key);
@@ -76,7 +76,7 @@ bool ShaderManager::GetSourceCode(std::wstring_view path, std::string& sourceCod
 
     DWORD dataRead = {};
     ReadFile(fileHandle, sourceCode.data(), size, &dataRead, 0);
-    assert(dataRead == size);
+    Assert(dataRead == size);
 
     CloseHandle(fileHandle);
 
@@ -107,7 +107,7 @@ IDxcBlob* ShaderManager::CompileShader(std::string_view sourceCode, ShaderType t
     mLibrary->CreateBlobWithEncodingFromPinned(sourceCode.data(), static_cast<uint32_t>(sourceCode.size()), CP_UTF8, &sourceBlob);
     
     IDxcOperationResult* result = nullptr;
-    assert(SUCCEEDED(mCompiler->Compile(sourceBlob, shaderPath.data(), entry.data(), GetShaderTargetProfile(type).data(), nullptr, 0, nullptr, 0, mIncludeHandler, &result)));
+    Assert(SUCCEEDED(mCompiler->Compile(sourceBlob, shaderPath.data(), entry.data(), GetShaderTargetProfile(type).data(), nullptr, 0, nullptr, 0, mIncludeHandler, &result)));
 
     HRESULT compilationResult;
     result->GetStatus(&compilationResult);
@@ -115,12 +115,12 @@ IDxcBlob* ShaderManager::CompileShader(std::string_view sourceCode, ShaderType t
     IDxcBlob* blob = nullptr;
     if (SUCCEEDED(compilationResult))
     {
-        assert(SUCCEEDED(result->GetResult(&blob)));
+        Assert(SUCCEEDED(result->GetResult(&blob)));
     }
     else
     {
         IDxcBlobEncoding* errorsBlob = nullptr;
-        assert(SUCCEEDED(result->GetErrorBuffer(&errorsBlob)));
+        Assert(SUCCEEDED(result->GetErrorBuffer(&errorsBlob)));
 
         std::string shaderPathA = ConvertWStringToString(shaderPath);
         const char* error = static_cast<const char*>(errorsBlob->GetBufferPointer());

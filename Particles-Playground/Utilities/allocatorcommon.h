@@ -28,7 +28,7 @@ public:
 
     virtual ~BaseAllocator()
     {
-        assert(mAllocationNum == 0);
+        Assert(mAllocationNum == 0);
     }
 
     virtual Range Allocate(uint32_t size, uint32_t alignment = 1) = 0;

@@ -64,7 +64,7 @@ Range FreeListAllocator<AllocStrategy>::Allocate(uint32_t size, uint32_t alignme
     result.Size = size;
 
     const uint64_t alignmentOffset = result.Start - freeBlock->Start;
-    assert(alignmentOffset >= 0);
+    Assert(alignmentOffset >= 0);
 
     if (alignmentOffset)
     {

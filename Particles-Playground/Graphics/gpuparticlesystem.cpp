@@ -74,7 +74,7 @@ void GPUParticleSystem::UpdateDirtyEmitters(CommandList& commandList)
     std::vector<GPUEmitter*> dirtyEmitters = mEmittersPool.GetObjects([](GPUEmitter* emitter){
         if (emitter->GetDirty())
         {
-            assert(emitter->GetParticleAllocation().IsValid());
+            Assert(emitter->GetParticleAllocation().IsValid());
             return true;
         }
         return false;
@@ -311,8 +311,8 @@ void GPUParticleSystem::DrawParticles(CommandList& commandList, GPUBuffer* camer
 {
     PIXScopedEvent(commandList.Get(), 0, "DrawParticles");
 
-    assert(cameraBuffer);
-    assert(renderTarget);
+    Assert(cameraBuffer);
+    Assert(renderTarget);
 
     Sampler defaultSampler;
 

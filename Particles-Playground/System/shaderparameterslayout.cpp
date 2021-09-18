@@ -116,7 +116,7 @@ RootParameters ShaderParametersLayout::GetParameters() const
         }
         else
         {
-            assert(0); // Unsupported parameter type
+            Assert(0); // Unsupported parameter type
         }
     }
 
@@ -127,7 +127,7 @@ RootParameters ShaderParametersLayout::GetParameters() const
 
 D3D12_SHADER_VISIBILITY ShaderParametersLayout::GetVisibilityForParameterIndex(uint32_t idx)
 {
-    assert(mParams.count(idx));
+    Assert(mParams.count(idx));
 
     const ParameterVar& param = mParams[idx];
     
@@ -142,6 +142,6 @@ D3D12_SHADER_VISIBILITY ShaderParametersLayout::GetVisibilityForParameterIndex(u
         return constant.Parameter.ShaderVisibility;
     }
     
-    assert(0); // Unsupported parameter type
+    Assert(0); // Unsupported parameter type
     return D3D12_SHADER_VISIBILITY_ALL;
 }

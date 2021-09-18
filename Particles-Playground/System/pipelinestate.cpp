@@ -41,7 +41,7 @@ GraphicPipelineState::GraphicPipelineState()
 GraphicPipelineState& GraphicPipelineState::SetVS(std::wstring_view name)
 {
     ShaderHandle shader = ShaderManager::Get().GetShader(name, ShaderType::Vertex);
-    assert(shader);
+    Assert(shader);
     mState.VS.pShaderBytecode = shader->GetBlob()->GetBufferPointer();
     mState.VS.BytecodeLength = shader->GetBlob()->GetBufferSize();
     return *this;
@@ -50,7 +50,7 @@ GraphicPipelineState& GraphicPipelineState::SetVS(std::wstring_view name)
 GraphicPipelineState& GraphicPipelineState::SetPS(std::wstring_view name)
 {
     ShaderHandle shader = ShaderManager::Get().GetShader(name, ShaderType::Pixel);
-    assert(shader);
+    Assert(shader);
     mState.PS.pShaderBytecode = shader->GetBlob()->GetBufferPointer();
     mState.PS.BytecodeLength = shader->GetBlob()->GetBufferSize();
     return *this;
@@ -70,14 +70,14 @@ GraphicPipelineState& GraphicPipelineState::SetPrimitiveType(D3D12_PRIMITIVE_TOP
 
 GraphicPipelineState& GraphicPipelineState::SetRTFormat(uint32_t idx, DXGI_FORMAT format)
 {
-    assert(idx < 8);
+    Assert(idx < 8);
     mState.RTVFormats[idx] = format;
     return *this;
 }
 
 GraphicPipelineState& GraphicPipelineState::SetRTBlendState(uint32_t idx, const D3D12_RENDER_TARGET_BLEND_DESC& blend)
 {
-    assert(idx < 8);
+    Assert(idx < 8);
     mState.BlendState.RenderTarget[idx] = blend;
     return *this;
 }
@@ -90,7 +90,7 @@ GraphicPipelineState& GraphicPipelineState::SetIndependentBlend(bool enable)
 
 GraphicPipelineState& GraphicPipelineState::SetViewportProperties(uint32_t idx, const CD3DX12_VIEWPORT& properties)
 {
-    assert(idx < 8);
+    Assert(idx < 8);
     mViewports[idx] = properties;
     return *this;
 }
@@ -128,7 +128,7 @@ ComputePipelineState& ComputePipelineState::SetCS(std::wstring_view name)
 
 ComputePipelineState& ComputePipelineState::SetCS(ShaderHandle shader)
 {
-    assert(shader);
+    Assert(shader);
     mState.CS.pShaderBytecode = shader->GetBlob()->GetBufferPointer();
     mState.CS.BytecodeLength = shader->GetBlob()->GetBufferSize();
     return *this;

@@ -8,7 +8,7 @@ constexpr bool IsPow2(T number) {
 template<typename T1, typename T2>
 constexpr T1 AlignPow2(T1 number, T2 alignment)
 {
-    assert(IsPow2(alignment));
+    Assert(IsPow2(alignment));
     alignment -= 1;
     return (number + alignment) & ~alignment;
 }

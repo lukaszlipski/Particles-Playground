@@ -30,7 +30,7 @@ Texture2D::Texture2D(uint32_t width, uint32_t height, TextureFormat format, Text
     D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(static_cast<DXGI_FORMAT>(format), width, height, 1, mipCount, 1, 0, flags);
     CD3DX12_HEAP_PROPERTIES props(D3D12_HEAP_TYPE_DEFAULT);
     const HRESULT hr = device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc, GetCurrentResourceState(), clearValue.has_value() ? &clearValue.value() : nullptr, IID_PPV_ARGS(&mResource));
-    assert(SUCCEEDED(hr));
+    Assert(SUCCEEDED(hr));
 
     mSize = static_cast<uint32_t>(GetRequiredIntermediateSize(mResource, 0, mipCount + 1));
 
@@ -45,7 +45,7 @@ Texture2D::~Texture2D()
 
 uint8_t* Texture2D::Map()
 {
-    assert(!mTemporaryMapResource); // Tried to map twice
+    Assert(!mTemporaryMapResource); // Tried to map twice
 
     const uint32_t size = mSize;
 
@@ -55,7 +55,7 @@ uint8_t* Texture2D::Map()
 
 void Texture2D::Unmap(CommandList& cmdList)
 {
-    assert(mTemporaryMapResource); // Tried to unmap without mapping
+    Assert(mTemporaryMapResource); // Tried to unmap without mapping
 
     const uint64_t startRange = mTemporaryMapResource->GetStartRange();
 
@@ -80,20 +80,20 @@ void Texture2D::Unmap(CommandList& cmdList)
 
 D3D12_CPU_DESCRIPTOR_HANDLE Texture2D::GetRTV() const
 {
-    assert(HasTextureUsage(TextureUsage::RenderTarget));
+    Assert(HasTextureUsage(TextureUsage::RenderTarget));
     return *mRTVHandle;
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE Texture2D::GetSRV() const
 {
-    assert(HasTextureUsage(TextureUsage::ShaderResource));
+    Assert(HasTextureUsage(TextureUsage::ShaderResource));
     return *mSRVHandle;
 }
 
 void Texture2D::SetCurrentUsage(TextureUsage usage, bool pixelShader, std::vector<D3D12_RESOURCE_BARRIER>& barriers)
 {
-    assert(IsPow2(static_cast<TextureUsageType>(usage))); // Only one bit can be set
-    assert(HasTextureUsage(usage));
+    Assert(IsPow2(static_cast<TextureUsageType>(usage))); // Only one bit can be set
+    Assert(HasTextureUsage(usage));
 
     const D3D12_RESOURCE_STATES stateBefore = GetCurrentResourceState();
     const D3D12_RESOURCE_STATES stateAfter = GetResourceState(usage, pixelShader);
@@ -116,7 +116,7 @@ uint32_t Texture2D::GetSizeForFormat(TextureFormat format) const
     case TextureFormat::R32G32B32A32:
         return sizeof(float) * 4;
     default:
-        assert(0);
+        Assert(0);
     }
 
     return 0;
@@ -124,7 +124,7 @@ uint32_t Texture2D::GetSizeForFormat(TextureFormat format) const
 
 D3D12_RESOURCE_STATES Texture2D::GetResourceState(TextureUsage usage, bool pixelShader) const
 {
-    assert(IsPow2(static_cast<TextureUsageType>(usage))); // Only one bit can be set
+    Assert(IsPow2(static_cast<TextureUsageType>(usage))); // Only one bit can be set
 
     switch (usage)
     {
@@ -139,7 +139,7 @@ D3D12_RESOURCE_STATES Texture2D::GetResourceState(TextureUsage usage, bool pixel
     case TextureUsage::All:
         return D3D12_RESOURCE_STATE_GENERIC_READ;
     default:
-        assert(0);
+        Assert(0);
     }
     return D3D12_RESOURCE_STATE_GENERIC_READ;
 }

@@ -16,7 +16,6 @@ using namespace DirectX;
 
 // std
 #include <cinttypes>
-#include <cassert>
 #include <string>
 #include <array>
 #include <vector>
@@ -28,3 +27,6 @@ using namespace DirectX;
 #include <algorithm>
 #include <numeric>
 #include <optional>
+
+// custom
+#include "Utilities/debug.h"

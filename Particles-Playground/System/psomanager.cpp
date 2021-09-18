@@ -78,14 +78,14 @@ ID3D12RootSignature* PSOManager::CompileShaderParameterLayout(const ShaderParame
     {
         const char* errorMsg = reinterpret_cast<const char*>(error->GetBufferPointer());
         OutputDebugMessage("Root Signature Error: %s\n", errorMsg);
-        assert(0);
+        Assert(0);
     }
 
     ID3D12Device* device = Graphic::Get().GetDevice();
 
     ID3D12RootSignature* rootSig = nullptr;
     hr = device->CreateRootSignature(0, blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(&rootSig));
-    assert(SUCCEEDED(hr));
+    Assert(SUCCEEDED(hr));
     blob->Release();
 
     mCachedRootSignatures[key] = rootSig;
@@ -97,7 +97,7 @@ ID3D12PipelineState* PSOManager::CreatePipelineState(const D3D12_GRAPHICS_PIPELI
     ID3D12Device* device = Graphic::Get().GetDevice();
     ID3D12PipelineState* result = nullptr;
     HRESULT hr = device->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&result));
-    assert(SUCCEEDED(hr));
+    Assert(SUCCEEDED(hr));
     return result;
 }
 
@@ -106,6 +106,6 @@ ID3D12PipelineState* PSOManager::CreatePipelineState(const D3D12_COMPUTE_PIPELIN
     ID3D12Device* device = Graphic::Get().GetDevice();
     ID3D12PipelineState* result = nullptr;
     HRESULT hr = device->CreateComputePipelineState(&desc, IID_PPV_ARGS(&result));
-    assert(SUCCEEDED(hr));
+    Assert(SUCCEEDED(hr));
     return result;
 }

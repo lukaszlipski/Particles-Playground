@@ -23,6 +23,6 @@ void LinearAllocator::Free(Range& range)
 
 void LinearAllocator::Clear()
 {
-    assert(mAllocationNum != 0);
+    Assert(mAllocationNum != 0);
     mCurrentPointer = mStartRange;
 }

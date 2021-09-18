@@ -192,7 +192,7 @@ CPUDescriptorHeap* Graphic::GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type
     case D3D12_DESCRIPTOR_HEAP_TYPE_RTV:
         return mCPUDescriptorHeapRTV.get();
     default:
-        assert(false);
+        Assert(false);
     }
     return nullptr;
 }
@@ -204,7 +204,7 @@ GPUDescriptorHeap* Graphic::GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type
     case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV:
         return mGPUDescriptorHeapCBV.get();
     default:
-        assert(false);
+        Assert(false);
     }
     return nullptr;
 }

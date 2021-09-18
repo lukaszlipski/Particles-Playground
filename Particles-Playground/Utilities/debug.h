@@ -1,5 +1,12 @@
 #pragma once
 
+// The __noop enables the use of bracket-less if-else statements and semicolon after the macro.
+// if (condition)
+//   Assert(false);
+// else
+//   ...
+#define Assert(x) if (!(x)) { __debugbreak(); char* ptr = nullptr; *ptr = 0;  } else __noop
+
 template<typename ...Args>
 void OutputDebugMessage(std::string_view format, Args... args)
 {

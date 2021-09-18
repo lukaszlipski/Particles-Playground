@@ -31,7 +31,7 @@ bool MeshManager::Shutdown()
 void MeshManager::Bind(CommandList& cmdList, MeshType type) const
 {
     const MeshResource& mesh = mMeshes[static_cast<uint32_t>(type)];
-    assert(mesh.VertexBuffer);
+    Assert(mesh.VertexBuffer);
     cmdList->IASetVertexBuffers(0, 1, &mesh.VertexBufferView);
     cmdList->IASetPrimitiveTopology(mesh.Topology);
     cmdList->IASetIndexBuffer(&mesh.IndexBufferView);

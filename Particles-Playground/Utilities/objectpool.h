@@ -108,7 +108,7 @@ public:
         : mNumObjects(numObjects)
         , mAllocator(0, numObjects)
     { 
-        assert(mNumObjects != 0 && mNumObjects <= ObjectHandle<ObjectType>::IndexMax); // Number of objects is too big for current Object's Handle or equal zero
+        Assert(mNumObjects != 0 && mNumObjects <= ObjectHandle<ObjectType>::IndexMax); // Number of objects is too big for current Object's Handle or equal zero
     }
 
     void Init();

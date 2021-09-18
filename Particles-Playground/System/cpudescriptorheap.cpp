@@ -11,7 +11,7 @@ CPUDescriptorHeap::CPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type) : mType(ty
     desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
     HRESULT hr = device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&mHeap));
-    assert(SUCCEEDED(hr));
+    Assert(SUCCEEDED(hr));
 }
 
 CPUDescriptorHeap::~CPUDescriptorHeap()
@@ -39,7 +39,7 @@ CPUDescriptorHeap& CPUDescriptorHeap::operator=(CPUDescriptorHeap&& rhs)
 CPUDescriptorHandle CPUDescriptorHeap::Allocate()
 {
     Range alloc = mAllocator.Allocate(1);
-    assert(alloc.IsValid());
+    Assert(alloc.IsValid());
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE handle(mHeap->GetCPUDescriptorHandleForHeapStart(), static_cast<uint32_t>(alloc.Start), Graphic::Get().GetHandleSize(mType));
     return CPUDescriptorHandle(alloc, handle);
