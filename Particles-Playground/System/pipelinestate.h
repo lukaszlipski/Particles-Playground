@@ -45,8 +45,8 @@ public:
         return *this;
     }
 
-    GraphicPipelineState& SetVS(std::wstring_view name);
-    GraphicPipelineState& SetPS(std::wstring_view name);
+    GraphicPipelineState& SetVS(ShaderHandle handle);
+    GraphicPipelineState& SetPS(ShaderHandle handle);
     GraphicPipelineState& SetRTNum(uint32_t num);
     GraphicPipelineState& SetPrimitiveType(D3D12_PRIMITIVE_TOPOLOGY_TYPE type);
     GraphicPipelineState& SetRTFormat(uint32_t idx, DXGI_FORMAT format);
@@ -66,8 +66,7 @@ class ComputePipelineState : public PipelineState<D3D12_COMPUTE_PIPELINE_STATE_D
 public:
     ComputePipelineState();
 
-    ComputePipelineState& SetCS(std::wstring_view name);
-    ComputePipelineState& SetCS(ShaderHandle shader);
+    ComputePipelineState& SetCS(ShaderHandle handle);
     void Bind(CommandList& commandList, ShaderParametersLayout& layout);
 
 };

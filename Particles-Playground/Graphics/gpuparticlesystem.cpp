@@ -119,7 +119,7 @@ void GPUParticleSystem::UpdateDirtyEmitters(CommandList& commandList)
     resetFreeIndicesLayout.SetUAV(1, 0, D3D12_SHADER_VISIBILITY_ALL);
 
     ComputePipelineState resetFreeIndicesState;
-    resetFreeIndicesState.SetCS(L"resetfreeindices");
+    resetFreeIndicesState.SetCS(CS_ResetFreeIndices);
     resetFreeIndicesState.Bind(commandList, resetFreeIndicesLayout);
 
     // Reset free indices buffer
@@ -176,7 +176,7 @@ void GPUParticleSystem::UpdateEmitters(CommandList& commandList, const std::vect
     updateEmitterLayout.SetUAV(5, 3, D3D12_SHADER_VISIBILITY_ALL);
 
     ComputePipelineState updateEmitterState;
-    updateEmitterState.SetCS(L"emitterupdate");
+    updateEmitterState.SetCS(CS_EmitterUpdate);
     updateEmitterState.Bind(commandList, updateEmitterLayout);
 
     EmitterUpdateConstants updateConstants;
@@ -325,6 +325,9 @@ void GPUParticleSystem::DrawParticles(CommandList& commandList, GPUBuffer* camer
     drawLayout.SetStaticSampler(0, defaultSampler, D3D12_SHADER_VISIBILITY_PIXEL);
 
     GraphicPipelineState drawState;
+    drawState.SetVS(VS_DrawParticle);
+    drawState.SetPS(PS_DrawParticle);
+
     D3D12_RENDER_TARGET_BLEND_DESC blendDesc{};
     blendDesc.BlendEnable = TRUE;
     blendDesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;

@@ -1,4 +1,4 @@
-#include "gpuemittertemplate.h"
+#include "Graphics/gpuemittertemplate.h"
 
 const char* defaultUpdateLogic = "particle.position += particle.velocity * Constants.deltaTime;\n\
 particle.velocity += float3(0, -9.8f, 0) * Constants.deltaTime;\n\
@@ -14,33 +14,48 @@ particle.scale = 1.0f;\n";
 
 GPUEmitterTemplate::GPUEmitterTemplate() 
 {
-    // #TODO: fix the way the default shader is obtained. The Index is invalid in the constructor
-    SetSpawnShader(defaultSpawnLogic);
-    SetUpdateShader(defaultUpdateLogic);
+    Assert(SetUpdateShader(defaultUpdateLogic) == std::nullopt);
+    Assert(SetSpawnShader(defaultSpawnLogic) == std::nullopt);
 }
 
-GPUEmitterTemplate& GPUEmitterTemplate::SetUpdateShader(std::string_view updateLogic)
+GPUEmitterTemplate::~GPUEmitterTemplate()
+{
+    ShaderManager::Get().FreeShader(mUpdateShader);
+    ShaderManager::Get().FreeShader(mSpawnShader);
+}
+
+std::optional<std::string> GPUEmitterTemplate::SetUpdateShader(std::string_view updateLogic)
 {
     ShaderToken updateToken = { "TOKEN_UPDATE_LOGIC", updateLogic };
-    ShaderHandle shader = ShaderManager::Get().GetShader(L"updateTemplate", ShaderType::Compute, L"main", GetIndex(), { updateToken });
+    ShaderCompilationResult result = ShaderManager::Get().CompileShader(L"updateTemplate", ShaderType::Compute, L"main", { updateToken });
 
-    if (shader)
+    if (result.IsValid())
     {
-        mUpdateShader = shader;
+        ShaderManager::Get().FreeShader(mUpdateShader);
+        mUpdateShader = result.GetHandle();
+    }
+    else
+    {
+        return std::optional<std::string>(result.GetError());
     }
 
-    return *this;
+    return std::nullopt;
 }
 
-GPUEmitterTemplate& GPUEmitterTemplate::SetSpawnShader(std::string_view spawnLogic)
+std::optional<std::string> GPUEmitterTemplate::SetSpawnShader(std::string_view spawnLogic)
 {
     ShaderToken spawnToken = { "TOKEN_SPAWN_LOGIC", spawnLogic };
-    ShaderHandle shader = ShaderManager::Get().GetShader(L"spawnTemplate", ShaderType::Compute, L"main", GetIndex(), { spawnToken });
+    ShaderCompilationResult result = ShaderManager::Get().CompileShader(L"spawnTemplate", ShaderType::Compute, L"main", { spawnToken });
 
-    if (shader)
+    if (result.IsValid())
     {
-        mSpawnShader = shader;
+        ShaderManager::Get().FreeShader(mSpawnShader);
+        mSpawnShader = result.GetHandle();
+    }
+    else
+    {
+        return std::optional<std::string>(result.GetError());
     }
 
-    return *this;
+    return std::nullopt;
 }

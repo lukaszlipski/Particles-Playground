@@ -197,6 +197,9 @@
     <ClInclude Include="Utilities\objectpool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="System\shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Source\default.hlsli" />

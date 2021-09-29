@@ -21,8 +21,6 @@ GraphicPipelineState::GraphicPipelineState()
 
     mState.pRootSignature = nullptr;
 
-    SetVS(L"vsdefault");
-    SetPS(L"psdefault");
     SetVertexFormat<DefaultVertex>();
     SetPrimitiveType(D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
     SetRTNum(1);
@@ -38,19 +36,19 @@ GraphicPipelineState::GraphicPipelineState()
     mState.SampleDesc.Count = 1;
 }
 
-GraphicPipelineState& GraphicPipelineState::SetVS(std::wstring_view name)
+GraphicPipelineState& GraphicPipelineState::SetVS(ShaderHandle handle)
 {
-    ShaderHandle shader = ShaderManager::Get().GetShader(name, ShaderType::Vertex);
-    Assert(shader);
+    Shader* shader = ShaderManager::Get().GetShader(handle);
+    Assert(shader && shader->GetType() == ShaderType::Vertex);
     mState.VS.pShaderBytecode = shader->GetBlob()->GetBufferPointer();
     mState.VS.BytecodeLength = shader->GetBlob()->GetBufferSize();
     return *this;
 }
 
-GraphicPipelineState& GraphicPipelineState::SetPS(std::wstring_view name)
+GraphicPipelineState& GraphicPipelineState::SetPS(ShaderHandle handle)
 {
-    ShaderHandle shader = ShaderManager::Get().GetShader(name, ShaderType::Pixel);
-    Assert(shader);
+    Shader* shader = ShaderManager::Get().GetShader(handle);
+    Assert(shader && shader->GetType() == ShaderType::Pixel);
     mState.PS.pShaderBytecode = shader->GetBlob()->GetBufferPointer();
     mState.PS.BytecodeLength = shader->GetBlob()->GetBufferSize();
     return *this;
@@ -120,15 +118,10 @@ ComputePipelineState::ComputePipelineState()
 {
 }
 
-ComputePipelineState& ComputePipelineState::SetCS(std::wstring_view name)
+ComputePipelineState& ComputePipelineState::SetCS(ShaderHandle handle)
 {
-    ShaderHandle shader = ShaderManager::Get().GetShader(name, ShaderType::Compute);
-    return SetCS(shader);
-}
-
-ComputePipelineState& ComputePipelineState::SetCS(ShaderHandle shader)
-{
-    Assert(shader);
+    Shader* shader = ShaderManager::Get().GetShader(handle);
+    Assert(shader && shader->GetType() == ShaderType::Compute);
     mState.CS.pShaderBytecode = shader->GetBlob()->GetBufferPointer();
     mState.CS.BytecodeLength = shader->GetBlob()->GetBufferSize();
     return *this;

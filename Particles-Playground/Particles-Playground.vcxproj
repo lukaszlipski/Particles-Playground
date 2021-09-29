@@ -212,6 +212,7 @@
     <ClInclude Include="Graphics\gpuemittertemplate.h" />
     <ClInclude Include="Graphics\gpuparticlesystem.h" />
     <ClInclude Include="Includes\d3dx12.h" />
+    <ClInclude Include="System\shader.h" />
     <ClInclude Include="Utilities\objectpool.h" />
     <ClInclude Include="Utilities\string.h" />
     <None Include="packages.config" />

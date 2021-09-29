@@ -50,6 +50,8 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     particle.velocity = float3(cos(phi), sin(phi), 0) * 15.0f; \n\
     particle.scale = 1.0f; \n";
 
+    GPUEmitterTemplateHandle defaultEmitterTemplateHandle = gpuParticlesSystem.CreateEmitterTemplate();
+
     GPUEmitterTemplateHandle emitterTemplateHandle = gpuParticlesSystem.CreateEmitterTemplate();
     GPUEmitterTemplate* emitterTemplate = gpuParticlesSystem.GetEmitterTemplate(emitterTemplateHandle);
     emitterTemplate->SetSpawnShader(spawnLogic);
@@ -58,10 +60,10 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     GPUEmitterHandle emitter1 = gpuParticlesSystem.CreateEmitter(emitterTemplateHandle, 800);
     gpuParticlesSystem.GetEmitter(emitter1)->SetSpawnRate(100.0f).SetParticleLifeTime(2.0f).SetParticleColor({ 1,0,0,1 }).SetPosition({ -30,0,0 });
     
-    GPUEmitterHandle emitter2 = gpuParticlesSystem.CreateEmitter(emitterTemplateHandle, 1000);
+    GPUEmitterHandle emitter2 = gpuParticlesSystem.CreateEmitter(defaultEmitterTemplateHandle, 1000);
     gpuParticlesSystem.GetEmitter(emitter2)->SetSpawnRate(200.0f).SetParticleLifeTime(5.0f).SetParticleColor({ 0,1,0,1 }).SetPosition({ 0,0,0 });
     
-    GPUEmitterHandle emitter3 = gpuParticlesSystem.CreateEmitter(emitterTemplateHandle, 2000);
+    GPUEmitterHandle emitter3 = gpuParticlesSystem.CreateEmitter(defaultEmitterTemplateHandle, 2000);
     gpuParticlesSystem.GetEmitter(emitter3)->SetSpawnRate(500.0f).SetParticleLifeTime(3.0f).SetParticleColor({ 0,0,1,1 }).SetPosition({ 30,0,0 });
 
     std::unique_ptr<Texture2D> renderTarget = std::make_unique<Texture2D>(Window::Get().GetWidth(), Window::Get().GetHeight(), TextureFormat::R8G8B8A8, TextureUsage::RenderTarget | TextureUsage::ShaderResource);
@@ -138,8 +140,8 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
             screenLayout.SetStaticSampler(0, defaultSampler, D3D12_SHADER_VISIBILITY_PIXEL);
 
             GraphicPipelineState screenState;
-            screenState.SetVS(L"vsscreen");
-            screenState.SetPS(L"psscreen");
+            screenState.SetVS(VS_Screen);
+            screenState.SetPS(PS_Screen);
             screenState.Bind(commandList, screenLayout);
             
             ShaderParameters screenParams;
@@ -170,6 +172,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     gpuParticlesSystem.FreeEmitter(emitter2);
     gpuParticlesSystem.FreeEmitter(emitter3);
     gpuParticlesSystem.FreeEmitterTemplate(emitterTemplateHandle);
+    gpuParticlesSystem.FreeEmitterTemplate(defaultEmitterTemplateHandle);
 
     Engine::Get().PreShutdown();
 
