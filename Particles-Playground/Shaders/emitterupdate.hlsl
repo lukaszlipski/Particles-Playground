@@ -27,6 +27,9 @@ void main( uint3 id : SV_DispatchThreadID )
     // Update emitter data
     EmitterStatus[emitterIndex].spawnAccTime += Constants.deltaTime;
 
+    // Update emitter's seed with PCG RNG
+    EmitterStatus[emitterIndex].currentSeed = GetRandomPCG(EmitterStatus[emitterIndex].currentSeed);
+
     uint freeCount = EmitterConstant[emitterIndex].maxParticles - EmitterStatus[emitterIndex].aliveParticles;
     uint maxSpawnCount = floor(EmitterStatus[emitterIndex].spawnAccTime * EmitterConstant[emitterIndex].spawnRate);
 

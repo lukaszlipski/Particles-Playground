@@ -49,6 +49,8 @@ public:
     inline Range AllocateParticles(uint32_t maxParticles) { return mParticlesAllocator.Allocate(maxParticles); }
     inline void FreeParticles(Range& allocation) { return mParticlesAllocator.Free(allocation); }
 
+    inline [[nodiscard]] uint32_t GetRandomNumber() { return mRNG.GetRandom(); }
+
     GPUBuffer* GetDrawIndirectBuffer() const { return mDrawIndirectBuffer.get(); }
     GPUBuffer* GetParticlesDataBuffer() const { return mParticlesDataBuffer.get(); }
     GPUBuffer* GetIndicesBuffer() const { return mIndicesBuffer.get(); }
@@ -68,5 +70,8 @@ private:
 
     std::unique_ptr<GPUBuffer> mDrawIndirectBuffer;
     std::unique_ptr<GPUBuffer> mSpawnIndirectBuffer;
+
+    // Note: Use different RNG than EmitterUpdate shader
+    RandomNumberGenerator<RngType::xxHash32> mRNG;
 
 };

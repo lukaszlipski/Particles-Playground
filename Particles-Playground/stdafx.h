@@ -30,3 +30,4 @@ using namespace DirectX;
 
 // custom
 #include "Utilities/debug.h"
+#include "Utilities/random.h"

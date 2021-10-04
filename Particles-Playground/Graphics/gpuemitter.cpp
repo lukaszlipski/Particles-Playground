@@ -11,6 +11,8 @@ GPUEmitter::GPUEmitter(GPUParticleSystem* particleSystem, GPUEmitterTemplateHand
     mConstantData.IndicesOffset = static_cast<uint32_t>(mParticleAllocation.Start);
 
     mTemplateHandle = emitterTemplate;
+
+    mInitialSeed = mParticleSystem->GetRandomNumber();
 }
 
 GPUEmitter::~GPUEmitter()

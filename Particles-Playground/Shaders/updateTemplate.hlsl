@@ -1,4 +1,4 @@
-#include "default.hlsli"
+#include "particlecommon.hlsli"
 
 struct UpdateConstants
 {
@@ -20,6 +20,7 @@ void main(uint3 id : SV_DispatchThreadID)
     uint emitterIndex = Constants.emitterIndex;
     EmitterConstantData emitterConstant = EmitterConstant[emitterIndex];
 
+    int particleIndex = id.x;
     if (id.x >= emitterConstant.maxParticles)
     {
         return;
@@ -30,6 +31,8 @@ void main(uint3 id : SV_DispatchThreadID)
 
     if (particle.lifeTime > 0)
     {
+        Internal_InitRandom(EmitterStatus[emitterIndex].currentSeed, particleIndex);
+
         // Update logic
         {
             TOKEN_UPDATE_LOGIC

@@ -1,4 +1,4 @@
-#include "default.hlsli"
+#include "particlecommon.hlsli"
 
 struct SpawnConstants
 {
@@ -14,9 +14,9 @@ struct SpawnInput
 
 ConstantBuffer<SpawnConstants> Constants : register(b0, space0);
 StructuredBuffer<EmitterConstantData> EmitterConstant : register(t0, space0);
+StructuredBuffer<EmitterStatusData> EmitterStatus : register(t1, space0);
 RWStructuredBuffer<ParticlesData> Particles : register(u0, space0);
-RWStructuredBuffer<EmitterStatusData> EmitterStatus : register(u1, space0);
-RWStructuredBuffer<uint> FreeList : register(u2, space0);
+RWStructuredBuffer<uint> FreeList : register(u1, space0);
 
 groupshared int ParticleGroupIndex;
 
@@ -31,7 +31,9 @@ void main(SpawnInput input)
     GroupMemoryBarrierWithGroupSync();
 
     uint emitterIndex = Constants.emitterIndex;
-    if (input.globalThreadID.x >= EmitterStatus[emitterIndex].particlesToSpawn)
+    EmitterStatusData emitterStatus = EmitterStatus[emitterIndex];
+
+    if (input.globalThreadID.x >= emitterStatus.particlesToSpawn)
     {
         return;
     }
@@ -43,9 +45,11 @@ void main(SpawnInput input)
     spawnIndex += input.groupID.x * 64;
 
     uint offset = emitterConstant.indicesOffset;
-    uint freeListIndex = offset + spawnIndex + (EmitterStatus[emitterIndex].aliveParticles - EmitterStatus[emitterIndex].particlesToSpawn);
+    uint freeListIndex = offset + spawnIndex + (emitterStatus.aliveParticles - emitterStatus.particlesToSpawn);
     int particleIndex = FreeList[freeListIndex];
     FreeList[freeListIndex] = -1;
+
+    Internal_InitRandom(emitterStatus.currentSeed, particleIndex);
 
     ParticlesData particle;
 

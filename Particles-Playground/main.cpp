@@ -43,7 +43,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     particle.scale = max(0.05f, particle.lifeTime / emitterConstant.lifeTime);\n\
     particle.lifeTime -= Constants.deltaTime;\n";
 
-    const char* spawnLogic = "float phi = (float(particleIndex) / emitterConstant.maxParticles) * 3.14f; \n\
+    const char* spawnLogic = "float phi = GetRandomFloat() * 3.14f; \n\
     particle.position = float3(0.0f, 0.0f, 0.0f) + emitterConstant.position; \n\
     particle.color = emitterConstant.color; \n\
     particle.lifeTime = emitterConstant.lifeTime; \n\

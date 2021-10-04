@@ -200,6 +200,9 @@
     <ClInclude Include="System\shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Utilities\random.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Source\default.hlsli" />
@@ -224,5 +227,6 @@
     <None Include="Utilities\objectpool.inl">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="Shaders\particlecommon.hlsli" />
   </ItemGroup>
 </Project>

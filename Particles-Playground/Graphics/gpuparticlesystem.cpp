@@ -5,9 +5,8 @@ GPUParticleSystem::GPUParticleSystem()
     : mParticlesAllocator(0, MaxParticles)
     , mEmittersPool(MaxEmitters)
     , mEmitterTemplatesPool(MaxEmitterTemplates)
-{
-
-}
+    , mRNG(0xDEADC0DE)
+{ }
 
 void GPUParticleSystem::Init()
 {
@@ -88,24 +87,35 @@ void GPUParticleSystem::UpdateDirtyEmitters(CommandList& commandList)
     {
         emitter->ClearDirty();
 
-        const uint32_t offset = emitter->GetEmitterIndexGPU() * sizeof(EmitterConstantData);
-        const uint32_t size = sizeof(EmitterConstantData);
+        { // Reset constant data
+            const uint32_t offset = emitter->GetEmitterIndexGPU() * sizeof(EmitterConstantData);
+            const uint32_t size = sizeof(EmitterConstantData);
 
-        uint8_t* data = mEmitterConstantBuffer->Map(offset, offset + size);
+            uint8_t* data = mEmitterConstantBuffer->Map(offset, offset + size);
+            const EmitterConstantData& constantData = emitter->GetConstantData();
+            memcpy(data, &constantData, sizeof(EmitterConstantData));
+            mEmitterConstantBuffer->Unmap(commandList);
+        }
 
-        const EmitterConstantData& constantData = emitter->GetConstantData();
+        { // Reset status data
+            const uint32_t offset = emitter->GetEmitterIndexGPU() * sizeof(EmitterStatusData);
+            const uint32_t size = sizeof(EmitterStatusData);
 
-        memcpy(data, &constantData, sizeof(EmitterConstantData));
+            uint8_t* data = mEmitterStatusBuffer->Map(offset, offset + size);
+            EmitterStatusData statusData = emitter->GetDefaultStatusData();
+            memcpy(data, &statusData, sizeof(EmitterStatusData));
+            mEmitterStatusBuffer->Unmap(commandList);
+        }
 
-        mEmitterConstantBuffer->Unmap(commandList);
+        { // Reset draw arguments
+            const uint32_t ioffset = emitter->GetEmitterIndexGPU() * sizeof(D3D12_DRAW_INDEXED_ARGUMENTS);
+            const uint32_t isize = sizeof(D3D12_DRAW_INDEXED_ARGUMENTS);
 
-        const uint32_t ioffset = emitter->GetEmitterIndexGPU() * sizeof(D3D12_DRAW_INDEXED_ARGUMENTS);
-        const uint32_t isize = sizeof(D3D12_DRAW_INDEXED_ARGUMENTS);
-
-        data = mDrawIndirectBuffer->Map(ioffset, ioffset + isize);
-        memset(data, 0, sizeof(D3D12_DRAW_INDEXED_ARGUMENTS));
-        reinterpret_cast<D3D12_DRAW_INDEXED_ARGUMENTS*>(data)->IndexCountPerInstance = 6;
-        mDrawIndirectBuffer->Unmap(commandList);
+            uint8_t* data = mDrawIndirectBuffer->Map(ioffset, ioffset + isize);
+            memset(data, 0, sizeof(D3D12_DRAW_INDEXED_ARGUMENTS));
+            reinterpret_cast<D3D12_DRAW_INDEXED_ARGUMENTS*>(data)->IndexCountPerInstance = 6;
+            mDrawIndirectBuffer->Unmap(commandList);
+        }
     }
 
     struct ResetConstants
@@ -197,10 +207,9 @@ void GPUParticleSystem::UpdateEmitters(CommandList& commandList, const std::vect
 
     {
         std::vector<D3D12_RESOURCE_BARRIER> barriers;
-        barriers.reserve(3);
+        barriers.reserve(2);
 
         mSpawnIndirectBuffer->SetCurrentUsage(BufferUsage::Indirect, barriers);
-        barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::UAV(mEmitterStatusBuffer->GetResource()));
         barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::UAV(mDrawIndirectBuffer->GetResource()));
 
         commandList->ResourceBarrier(static_cast<uint32_t>(barriers.size()), barriers.data());
@@ -214,9 +223,9 @@ void GPUParticleSystem::SpawnParticles(CommandList& commandList, const std::vect
     ShaderParametersLayout spawnLayout;
     spawnLayout.SetConstant(0, 0, 1, D3D12_SHADER_VISIBILITY_ALL);
     spawnLayout.SetSRV(1, 0, D3D12_SHADER_VISIBILITY_ALL);
-    spawnLayout.SetUAV(2, 0, D3D12_SHADER_VISIBILITY_ALL);
-    spawnLayout.SetUAV(3, 1, D3D12_SHADER_VISIBILITY_ALL);
-    spawnLayout.SetUAV(4, 2, D3D12_SHADER_VISIBILITY_ALL);
+    spawnLayout.SetSRV(2, 1, D3D12_SHADER_VISIBILITY_ALL);
+    spawnLayout.SetUAV(3, 0, D3D12_SHADER_VISIBILITY_ALL);
+    spawnLayout.SetUAV(4, 1, D3D12_SHADER_VISIBILITY_ALL);
 
     for (GPUEmitter* emitter : enabledEmitters)
     {
@@ -229,8 +238,8 @@ void GPUParticleSystem::SpawnParticles(CommandList& commandList, const std::vect
         ShaderParameters spawnParams;
         spawnParams.SetConstant(0, emitter->GetEmitterIndexGPU());
         spawnParams.SetSRV(1, *mEmitterConstantBuffer);
-        spawnParams.SetUAV(2, *mParticlesDataBuffer);
-        spawnParams.SetUAV(3, *mEmitterStatusBuffer);
+        spawnParams.SetSRV(2, *mEmitterStatusBuffer);
+        spawnParams.SetUAV(3, *mParticlesDataBuffer);
         spawnParams.SetUAV(4, *mFreeIndicesBuffer);
         spawnParams.Bind<false>(commandList, spawnLayout);
 
@@ -240,10 +249,9 @@ void GPUParticleSystem::SpawnParticles(CommandList& commandList, const std::vect
 
     {
         std::vector<D3D12_RESOURCE_BARRIER> barriers;
-        barriers.reserve(4);
+        barriers.reserve(2);
 
         barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::UAV(mParticlesDataBuffer->GetResource()));
-        barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::UAV(mEmitterStatusBuffer->GetResource()));
         barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::UAV(mFreeIndicesBuffer->GetResource()));
 
         commandList->ResourceBarrier(static_cast<uint32_t>(barriers.size()), barriers.data());

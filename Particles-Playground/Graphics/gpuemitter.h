@@ -24,6 +24,7 @@ struct EmitterConstantData
 
 struct EmitterStatusData
 {
+    uint32_t CurrentSeed = 0;
     uint32_t AliveParticles = 0;
     uint32_t ParticlesToSpawn = 0;
     uint32_t ParticlesToUpdate = 0;
@@ -51,6 +52,7 @@ public:
     GPUEmitter& SetPosition(const XMFLOAT3& position);
 
     inline const EmitterConstantData& GetConstantData() const { return mConstantData; }
+    inline const EmitterStatusData GetDefaultStatusData() const { return EmitterStatusData{ mInitialSeed }; }
 
     inline bool GetEnabled() const { return mEnabled; }
     inline void SetEnabled(bool value) { mEnabled = value; }
@@ -77,6 +79,8 @@ private:
 
     bool mDirty = true;
     bool mEnabled = true;
+
+    uint32_t mInitialSeed = 0;
 };
 
 using GPUEmitterHandle = ObjectHandle<GPUEmitter>;
