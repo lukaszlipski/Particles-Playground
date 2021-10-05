@@ -60,6 +60,7 @@ bool Graphic::Startup()
 
     mCPUDescriptorHeapCBV = std::make_unique<CPUDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     mCPUDescriptorHeapRTV = std::make_unique<CPUDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    mCPUDescriptorHeapDSV = std::make_unique<CPUDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
     mGPUDescriptorHeapCBV = std::make_unique<GPUDescriptorHeap>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -90,6 +91,7 @@ bool Graphic::Shutdown()
 
     if (mCPUDescriptorHeapCBV) { mCPUDescriptorHeapCBV.reset(); }
     if (mCPUDescriptorHeapRTV) { mCPUDescriptorHeapRTV.reset(); }
+    if (mCPUDescriptorHeapDSV) { mCPUDescriptorHeapDSV.reset(); }
 
     if (mGPUDescriptorHeapCBV) { mGPUDescriptorHeapCBV.reset(); }
 
@@ -191,6 +193,8 @@ CPUDescriptorHeap* Graphic::GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type
         return mCPUDescriptorHeapCBV.get();
     case D3D12_DESCRIPTOR_HEAP_TYPE_RTV:
         return mCPUDescriptorHeapRTV.get();
+    case D3D12_DESCRIPTOR_HEAP_TYPE_DSV:
+        return mCPUDescriptorHeapDSV.get();
     default:
         Assert(false);
     }

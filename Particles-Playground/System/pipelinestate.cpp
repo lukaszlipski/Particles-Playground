@@ -73,6 +73,18 @@ GraphicPipelineState& GraphicPipelineState::SetRTFormat(uint32_t idx, DXGI_FORMA
     return *this;
 }
 
+GraphicPipelineState& GraphicPipelineState::SetDSFormat(DXGI_FORMAT format)
+{
+    mState.DSVFormat = format;
+    return *this;
+}
+
+GraphicPipelineState& GraphicPipelineState::SetDSState(const D3D12_DEPTH_STENCIL_DESC& state)
+{
+    mState.DepthStencilState = state;
+    return *this;
+}
+
 GraphicPipelineState& GraphicPipelineState::SetRTBlendState(uint32_t idx, const D3D12_RENDER_TARGET_BLEND_DESC& blend)
 {
     Assert(idx < 8);

@@ -50,6 +50,8 @@ public:
     GraphicPipelineState& SetRTNum(uint32_t num);
     GraphicPipelineState& SetPrimitiveType(D3D12_PRIMITIVE_TOPOLOGY_TYPE type);
     GraphicPipelineState& SetRTFormat(uint32_t idx, DXGI_FORMAT format);
+    GraphicPipelineState& SetDSFormat(DXGI_FORMAT format);
+    GraphicPipelineState& SetDSState(const D3D12_DEPTH_STENCIL_DESC& state);
     GraphicPipelineState& SetRTBlendState(uint32_t idx, const D3D12_RENDER_TARGET_BLEND_DESC& blend);
     GraphicPipelineState& SetIndependentBlend(bool enable);
     GraphicPipelineState& SetViewportProperties(uint32_t idx, const CD3DX12_VIEWPORT& properties);

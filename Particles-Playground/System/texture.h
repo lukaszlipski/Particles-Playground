@@ -13,6 +13,8 @@ enum class TextureUsage : TextureUsageType
     RenderTarget    = 1 << 1,
     CopyDst         = 1 << 2,
     CopySrc         = 1 << 3,
+    DepthRead       = 1 << 4,
+    DepthWrite      = 1 << 5,
     All             = std::numeric_limits<TextureUsageType>::max()
 };
 
@@ -28,6 +30,7 @@ enum class TextureFormat
 {
     R8G8B8A8 = DXGI_FORMAT_R8G8B8A8_UNORM,
     R32G32B32A32 = DXGI_FORMAT_R32G32B32A32_FLOAT,
+    D32 = DXGI_FORMAT_D32_FLOAT,
 };
 
 class Texture2D : public ResourceBase
@@ -51,6 +54,7 @@ public:
     uint32_t GetSizeForFormat(TextureFormat format) const;
     D3D12_CPU_DESCRIPTOR_HANDLE GetRTV() const;
     D3D12_CPU_DESCRIPTOR_HANDLE GetSRV() const;
+    D3D12_CPU_DESCRIPTOR_HANDLE GetDSV() const;
     void SetCurrentUsage(TextureUsage usage, bool pixelShader, std::vector<D3D12_RESOURCE_BARRIER>& barriers);
 
 private:
@@ -68,6 +72,7 @@ private:
 
     std::unique_ptr<CPUDescriptorHandle> mRTVHandle;
     std::unique_ptr<CPUDescriptorHandle> mSRVHandle;
+    std::unique_ptr<CPUDescriptorHandle> mDSVHandle;
 
     UploadBufferTemporaryRangeHandle mTemporaryMapResource = nullptr;
 

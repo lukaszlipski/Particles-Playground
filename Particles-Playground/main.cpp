@@ -69,6 +69,9 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     std::unique_ptr<Texture2D> renderTarget = std::make_unique<Texture2D>(Window::Get().GetWidth(), Window::Get().GetHeight(), TextureFormat::R8G8B8A8, TextureUsage::RenderTarget | TextureUsage::ShaderResource);
     renderTarget->SetDebugName(L"TestRenderTarget");
 
+    std::unique_ptr<Texture2D> depthBuffer = std::make_unique<Texture2D>(Window::Get().GetWidth(), Window::Get().GetHeight(), TextureFormat::D32, TextureUsage::DepthWrite);
+    depthBuffer->SetDebugName(L"DepthBuffer");
+
     std::unique_ptr<Texture2D> texture = std::make_unique<Texture2D>(100, 100, TextureFormat::R32G32B32A32, TextureUsage::ShaderResource | TextureUsage::CopyDst);
     texture->SetDebugName(L"TestTexture");
 
@@ -121,6 +124,8 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
 
                 FLOAT clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
                 commandList->ClearRenderTargetView(renderTarget->GetRTV(), clearColor, 0, nullptr);
+
+                commandList->ClearDepthStencilView(depthBuffer->GetDSV(), D3D12_CLEAR_FLAG_DEPTH, 1, 0, 0, nullptr);
             }
 
             gpuParticlesSystem.DrawParticles(commandList, constantBuffer.get(), renderTarget.get());
@@ -178,6 +183,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
 
     gpuParticlesSystem.Free();
     texture.reset();
+    depthBuffer.reset();
     renderTarget.reset();
     constantBuffer.reset();
 
