@@ -25,23 +25,37 @@ void main( uint3 id : SV_DispatchThreadID )
     uint emitterIndex = EmitterIndexBuffer[id.x];
 
     // Update emitter data
-    EmitterStatus[emitterIndex].spawnAccTime += Constants.deltaTime;
+    EmitterStatusData emitterStatus = EmitterStatus[emitterIndex];
+    EmitterConstantData emitterConstant = EmitterConstant[emitterIndex];
 
-    // Update emitter's seed with PCG RNG
-    EmitterStatus[emitterIndex].currentSeed = GetRandomPCG(EmitterStatus[emitterIndex].currentSeed);
+    emitterStatus.updateTime += Constants.deltaTime;
+    
+    if (emitterConstant.loopTime == -1.0f || emitterStatus.updateTime <= emitterConstant.loopTime)
+    {
+        emitterStatus.spawnAccTime += Constants.deltaTime;
 
-    uint freeCount = EmitterConstant[emitterIndex].maxParticles - EmitterStatus[emitterIndex].aliveParticles;
-    uint maxSpawnCount = floor(EmitterStatus[emitterIndex].spawnAccTime * EmitterConstant[emitterIndex].spawnRate);
+        // Update emitter's seed with PCG RNG
+        emitterStatus.currentSeed = GetRandomPCG(emitterStatus.currentSeed);
 
-    EmitterStatus[emitterIndex].particlesToSpawn = min(freeCount, maxSpawnCount);
-    EmitterStatus[emitterIndex].spawnAccTime -= float(maxSpawnCount) / EmitterConstant[id.x].spawnRate;
+        uint freeCount = EmitterConstant[emitterIndex].maxParticles - emitterStatus.aliveParticles;
+        uint maxSpawnCount = floor(emitterStatus.spawnAccTime * EmitterConstant[emitterIndex].spawnRate);
 
-    // Add the particles to spawn in advance so spawn shader doesn't have to
-    EmitterStatus[emitterIndex].aliveParticles += EmitterStatus[emitterIndex].particlesToSpawn;
-    EmitterStatus[emitterIndex].particlesToUpdate = EmitterStatus[emitterIndex].aliveParticles;
+        emitterStatus.particlesToSpawn = min(freeCount, maxSpawnCount);
+        emitterStatus.spawnAccTime -= float(maxSpawnCount) / EmitterConstant[id.x].spawnRate;
+
+        // Add the particles to spawn in advance so spawn shader doesn't have to
+        emitterStatus.aliveParticles += emitterStatus.particlesToSpawn;
+        emitterStatus.particlesToUpdate = emitterStatus.aliveParticles;
+    }
+    else
+    {
+        emitterStatus.particlesToSpawn = 0;
+    }
+
+    EmitterStatus[emitterIndex] = emitterStatus;
 
     // Preapre spawn indirect buffer
-    uint spawnDispatchNum = (EmitterStatus[emitterIndex].particlesToSpawn + 63) / 64;
+    uint spawnDispatchNum = (emitterStatus.particlesToSpawn + 63) / 64;
     SpawnIndirectBuffer[emitterIndex].threadGroupCountX = spawnDispatchNum;
     SpawnIndirectBuffer[emitterIndex].threadGroupCountY = 1;
     SpawnIndirectBuffer[emitterIndex].threadGroupCountZ = 1;

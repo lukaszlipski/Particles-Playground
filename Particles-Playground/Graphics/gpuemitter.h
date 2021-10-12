@@ -20,6 +20,7 @@ struct EmitterConstantData
     uint32_t IndicesOffset = 0;
     XMFLOAT4 Color = { 1, 1, 1, 1 };
     XMFLOAT3 Position = { 0, 0, 0 };
+    float LoopTime = -1;
 };
 
 struct EmitterStatusData
@@ -29,6 +30,7 @@ struct EmitterStatusData
     uint32_t ParticlesToSpawn = 0;
     uint32_t ParticlesToUpdate = 0;
     float SpawnAccTime = 0;
+    float UpdateTime = 0;
 };
 
 class GPUParticleSystem;
@@ -50,6 +52,7 @@ public:
     GPUEmitter& SetParticleLifeTime(float lifeTime);
     GPUEmitter& SetParticleColor(const XMFLOAT4& color);
     GPUEmitter& SetPosition(const XMFLOAT3& position);
+    GPUEmitter& SetLoopTime(float loopTime);
 
     inline const EmitterConstantData& GetConstantData() const { return mConstantData; }
     inline const EmitterStatusData GetDefaultStatusData() const { return EmitterStatusData{ mInitialSeed }; }

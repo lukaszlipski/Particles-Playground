@@ -38,33 +38,51 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     gpuParticlesSystem.Init();
 
     const char* updateLogic = "particle.position += particle.velocity * Constants.deltaTime;\n\
-    particle.velocity += float3(-2.0f, -9.8f, 0) * Constants.deltaTime;\n\
-    particle.color = lerp(float4(0,1,1,0), emitterConstant.color, particle.lifeTime / emitterConstant.lifeTime);\n\
-    particle.scale = max(0.05f, particle.lifeTime / emitterConstant.lifeTime);\n\
+    float3 forces = float3(0.0f, -9.8f, 0.0f) + float3(-4.0f, 0.0f, 0.0f);\n\
+    float mass = 1.0f;\n\
+    particle.velocity += (forces / mass) * Constants.deltaTime;\n\
+    float localLifeTime = particle.lifeTime / emitterConstant.particleLifeTime;\n\
+    particle.color = lerp(float4(0,1,1,0), emitterConstant.color, localLifeTime);\n\
+    particle.scale = lerp(2.0f, 0.3f, localLifeTime);\n\
     particle.lifeTime -= Constants.deltaTime;\n";
 
     const char* spawnLogic = "float phi = GetRandomFloat() * 3.14f; \n\
     particle.position = float3(0.0f, 0.0f, 0.0f) + emitterConstant.position; \n\
     particle.color = emitterConstant.color; \n\
-    particle.lifeTime = emitterConstant.lifeTime; \n\
+    particle.lifeTime = emitterConstant.particleLifeTime; \n\
     particle.velocity = float3(cos(phi), sin(phi), 0) * 15.0f; \n\
     particle.scale = 1.0f; \n";
 
-    GPUEmitterTemplateHandle defaultEmitterTemplateHandle = gpuParticlesSystem.CreateEmitterTemplate();
+    const char* updateLogic2 = "particle.position += particle.velocity * Constants.deltaTime; \n\
+    float3 diff = emitterConstant.position - particle.position; \n\
+    float dist = max(distance(diff, 0), 0.01f); \n\
+    float distClamped = clamp(dist, 4, 9); \n\
+    particle.velocity += (diff / dist) * ((25 * 25) / (distClamped * distClamped)) * Constants.deltaTime; \n\
+    particle.color = lerp(emitterConstant.color, float4(0.5f, 0, 1, 0.3f), dist / 22); \n\
+    particle.scale = lerp(0.2f, 2.0f, dist / 22); \n";
 
-    GPUEmitterTemplateHandle emitterTemplateHandle = gpuParticlesSystem.CreateEmitterTemplate();
-    GPUEmitterTemplate* emitterTemplate = gpuParticlesSystem.GetEmitterTemplate(emitterTemplateHandle);
-    emitterTemplate->SetSpawnShader(spawnLogic);
-    emitterTemplate->SetUpdateShader(updateLogic);
+    const char* spawnLogic2 = "float random = GetRandomFloat() * 6.28f; \n\
+    particle.position = emitterConstant.position + float3( 20 * cos(random), 10 * sin(random), 0 ); \n\
+    particle.color = emitterConstant.color; \n\
+    particle.lifeTime = emitterConstant.particleLifeTime; \n\
+    particle.velocity = float3(GetRandomFloat() * 2 - 1, GetRandomFloat() * 2 - 1, 0) * 5; \n\
+    particle.scale = 1.0f; \n";
 
-    GPUEmitterHandle emitter1 = gpuParticlesSystem.CreateEmitter(emitterTemplateHandle, 800);
-    gpuParticlesSystem.GetEmitter(emitter1)->SetSpawnRate(100.0f).SetParticleLifeTime(2.0f).SetParticleColor({ 1,0,0,1 }).SetPosition({ -30,0,0 });
+    GPUEmitterTemplateHandle emitterTemplateHandle1 = gpuParticlesSystem.CreateEmitterTemplate();
+    GPUEmitterTemplate* emitterTemplate1 = gpuParticlesSystem.GetEmitterTemplate(emitterTemplateHandle1);
+    emitterTemplate1->SetSpawnShader(spawnLogic);
+    emitterTemplate1->SetUpdateShader(updateLogic);
+
+    GPUEmitterHandle emitter1 = gpuParticlesSystem.CreateEmitter(emitterTemplateHandle1, 800);
+    gpuParticlesSystem.GetEmitter(emitter1)->SetSpawnRate(100.0f).SetParticleLifeTime(2.0f).SetParticleColor({ 1,0,0,1 }).SetPosition({ -20,0,0 }).SetLoopTime(3);
     
-    GPUEmitterHandle emitter2 = gpuParticlesSystem.CreateEmitter(defaultEmitterTemplateHandle, 1000);
-    gpuParticlesSystem.GetEmitter(emitter2)->SetSpawnRate(200.0f).SetParticleLifeTime(5.0f).SetParticleColor({ 0,1,0,1 }).SetPosition({ 0,0,0 });
-    
-    GPUEmitterHandle emitter3 = gpuParticlesSystem.CreateEmitter(defaultEmitterTemplateHandle, 2000);
-    gpuParticlesSystem.GetEmitter(emitter3)->SetSpawnRate(500.0f).SetParticleLifeTime(3.0f).SetParticleColor({ 0,0,1,1 }).SetPosition({ 30,0,0 });
+    GPUEmitterTemplateHandle emitterTemplateHandle2 = gpuParticlesSystem.CreateEmitterTemplate();
+    GPUEmitterTemplate* emitterTemplate2 = gpuParticlesSystem.GetEmitterTemplate(emitterTemplateHandle2);
+    emitterTemplate2->SetSpawnShader(spawnLogic2);
+    emitterTemplate2->SetUpdateShader(updateLogic2);
+
+    GPUEmitterHandle emitter2 = gpuParticlesSystem.CreateEmitter(emitterTemplateHandle2, 100);
+    gpuParticlesSystem.GetEmitter(emitter2)->SetSpawnRate(5.0f).SetParticleLifeTime(1.0f).SetParticleColor({ 0,0.5f,1,1 }).SetPosition({ 20,0,0 }).SetLoopTime(10);
 
     std::unique_ptr<Texture2D> renderTarget = std::make_unique<Texture2D>(Window::Get().GetWidth(), Window::Get().GetHeight(), TextureFormat::R8G8B8A8, TextureUsage::RenderTarget | TextureUsage::ShaderResource);
     renderTarget->SetDebugName(L"TestRenderTarget");
@@ -175,9 +193,8 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
 
     gpuParticlesSystem.FreeEmitter(emitter1);
     gpuParticlesSystem.FreeEmitter(emitter2);
-    gpuParticlesSystem.FreeEmitter(emitter3);
-    gpuParticlesSystem.FreeEmitterTemplate(emitterTemplateHandle);
-    gpuParticlesSystem.FreeEmitterTemplate(defaultEmitterTemplateHandle);
+    gpuParticlesSystem.FreeEmitterTemplate(emitterTemplateHandle1);
+    gpuParticlesSystem.FreeEmitterTemplate(emitterTemplateHandle2);
 
     Engine::Get().PreShutdown();
 

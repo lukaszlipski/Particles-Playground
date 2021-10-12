@@ -47,3 +47,10 @@ GPUEmitter& GPUEmitter::SetPosition(const XMFLOAT3& position)
     SetDitry();
     return *this;
 }
+
+GPUEmitter& GPUEmitter::SetLoopTime(float loopTime)
+{
+    mConstantData.LoopTime = loopTime;
+    SetDitry();
+    return *this;
+}

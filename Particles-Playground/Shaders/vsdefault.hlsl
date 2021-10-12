@@ -24,11 +24,9 @@ VSOutput main(VSInput input)
     ParticlesData data = Data[Constants.indicesOffset + index];
     float4x4 mat = mul(Camera.proj, Camera.view);
     
-    output.pos = mul(mat, float4(input.pos + data.position, 1));
+    output.pos = mul(mat, float4((input.pos * data.scale) + data.position, 1));
     output.color = data.color;
     output.texCoord = input.texCoord;
-    output.radius = lerp(0.1f, 0.4f, data.scale);
-    output.fade = data.scale;
     
 	return output;
 }

@@ -2,13 +2,13 @@
 
 const char* defaultUpdateLogic = "particle.position += particle.velocity * Constants.deltaTime;\n\
 particle.velocity += float3(0, -9.8f, 0) * Constants.deltaTime;\n\
-particle.color.a = max(0.0f, particle.lifeTime / emitterConstant.lifeTime);\n\
+particle.color.a = max(0.0f, particle.lifeTime / emitterConstant.particleLifeTime);\n\
 particle.lifeTime -= Constants.deltaTime;\n";
 
 const char* defaultSpawnLogic = "float phi = (float(particleIndex) / emitterConstant.maxParticles) * 3.14f;\n\
 particle.position = float3(0.0f, 0.0f, 0.0f) + emitterConstant.position;\n\
 particle.color = emitterConstant.color;\n\
-particle.lifeTime = emitterConstant.lifeTime;\n\
+particle.lifeTime = emitterConstant.particleLifeTime;\n\
 particle.velocity = float3(cos(phi), sin(phi), 0) * 15.0f;\n\
 particle.scale = 1.0f;\n";
 

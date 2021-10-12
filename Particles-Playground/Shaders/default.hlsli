@@ -11,8 +11,6 @@ struct VSOutput
     float4 pos : SV_POSITION;
     float4 color : COLOR;
     float2 texCoord : TEXCOORD;
-    float radius : RADIUS;
-    float fade : FADE;
 };
 
 struct DrawIndirectArgs
@@ -40,24 +38,15 @@ struct ParticlesData
     float4 color;
 };
 
-struct EmitterData
-{
-    uint aliveParticles;
-    uint maxParticles;
-    uint particlesToSpawn;
-    float spawnAccTime;
-    float spawnRate;
-    float lifeTime;
-};
-
 struct EmitterConstantData
 {
     uint maxParticles;
     float spawnRate;
-    float lifeTime;
+    float particleLifeTime;
     uint indicesOffset;
     float4 color;
     float3 position;
+    float loopTime;
 };
 
 struct EmitterStatusData
@@ -67,6 +56,7 @@ struct EmitterStatusData
     uint particlesToSpawn;
     uint particlesToUpdate;
     float spawnAccTime;
+    float updateTime;
 };
 
 uint GetRandomPCG(uint seed)
