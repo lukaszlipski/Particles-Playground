@@ -5,7 +5,7 @@ particle.velocity += float3(0, -9.8f, 0) * Constants.deltaTime;\n\
 particle.color.a = max(0.0f, particle.lifeTime / emitterConstant.particleLifeTime);\n\
 particle.lifeTime -= Constants.deltaTime;\n";
 
-const char* defaultSpawnLogic = "float phi = (float(particleIndex) / emitterConstant.maxParticles) * 3.14f;\n\
+const char* defaultSpawnLogic = "float phi = GetRandomFloat() * 3.14f;\n\
 particle.position = float3(0.0f, 0.0f, 0.0f) + emitterConstant.position;\n\
 particle.color = emitterConstant.color;\n\
 particle.lifeTime = emitterConstant.particleLifeTime;\n\

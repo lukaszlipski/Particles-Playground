@@ -52,7 +52,7 @@ struct EmitterConstantData
 struct EmitterStatusData
 {
     uint currentSeed;
-    uint aliveParticles;
+    uint freeListPointer;
     uint particlesToSpawn;
     uint particlesToUpdate;
     float spawnAccTime;

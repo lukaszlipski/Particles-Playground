@@ -20,14 +20,14 @@ void main(uint3 id : SV_DispatchThreadID)
     uint emitterIndex = Constants.emitterIndex;
     EmitterConstantData emitterConstant = EmitterConstant[emitterIndex];
 
-    int particleIndex = id.x;
-    if (id.x >= emitterConstant.maxParticles)
+    uint particleIndex = id.x;
+    if (particleIndex >= emitterConstant.maxParticles)
     {
         return;
     }
 
     uint offset = emitterConstant.indicesOffset;
-    ParticlesData particle = Particles[offset + id.x];
+    ParticlesData particle = Particles[offset + particleIndex];
 
     if (particle.lifeTime > 0)
     {
@@ -38,21 +38,21 @@ void main(uint3 id : SV_DispatchThreadID)
             TOKEN_UPDATE_LOGIC
         }
 
-        Particles[offset + id.x] = particle;
+        Particles[offset + particleIndex] = particle;
 
         if (particle.lifeTime <= 0)
         {
-            int freeListIndex;
-            InterlockedAdd(EmitterStatus[emitterIndex].aliveParticles, -1, freeListIndex);
+            uint freeListIndex;
+            InterlockedAdd(EmitterStatus[emitterIndex].freeListPointer, -1, freeListIndex);
             freeListIndex -= 1;
 
-            FreeList[offset + freeListIndex] = id.x;
+            FreeList[offset + freeListIndex] = particleIndex;
         }
         else
         {
             int index;
             InterlockedAdd(DrawIndirectArgs[emitterIndex].instanceCount, 1, index);
-            Indices[offset + index] = id.x;
+            Indices[offset + index] = particleIndex;
         }
 
     }

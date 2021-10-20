@@ -37,15 +37,15 @@ void main( uint3 id : SV_DispatchThreadID )
         // Update emitter's seed with PCG RNG
         emitterStatus.currentSeed = GetRandomPCG(emitterStatus.currentSeed);
 
-        uint freeCount = EmitterConstant[emitterIndex].maxParticles - emitterStatus.aliveParticles;
+        uint aliveParticles = DrawIndirectBuffer[emitterIndex].instanceCount;
+
+        uint freeCount = EmitterConstant[emitterIndex].maxParticles - aliveParticles;
         uint maxSpawnCount = floor(emitterStatus.spawnAccTime * EmitterConstant[emitterIndex].spawnRate);
 
         emitterStatus.particlesToSpawn = min(freeCount, maxSpawnCount);
-        emitterStatus.spawnAccTime -= float(maxSpawnCount) / EmitterConstant[id.x].spawnRate;
+        emitterStatus.spawnAccTime -= float(maxSpawnCount) / EmitterConstant[emitterIndex].spawnRate;
 
-        // Add the particles to spawn in advance so spawn shader doesn't have to
-        emitterStatus.aliveParticles += emitterStatus.particlesToSpawn;
-        emitterStatus.particlesToUpdate = emitterStatus.aliveParticles;
+        emitterStatus.particlesToUpdate = aliveParticles;
     }
     else
     {

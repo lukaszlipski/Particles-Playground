@@ -32,10 +32,6 @@ public:
     void Free();
 
     void Update(CommandList& commandList);
-    void UpdateDirtyEmitters(CommandList& commandList);
-    void UpdateEmitters(CommandList& commandList, const std::vector<GPUEmitter*>& enabledEmitters);
-    void SpawnParticles(CommandList& commandList, const std::vector<GPUEmitter*>& enabledEmitters);
-    void UpdateParticles(CommandList& commandList, const std::vector<GPUEmitter*>& enabledEmitters);
     void DrawParticles(CommandList& commandList, GPUBuffer* cameraBuffer, Texture2D* renderTarget);
 
     inline GPUEmitterHandle CreateEmitter(GPUEmitterTemplateHandle emitterTemplate, uint32_t maxParticles) { return mEmittersPool.AllocateObject(this, emitterTemplate, maxParticles); }
@@ -51,11 +47,12 @@ public:
 
     inline [[nodiscard]] uint32_t GetRandomNumber() { return mRNG.GetRandom(); }
 
-    GPUBuffer* GetDrawIndirectBuffer() const { return mDrawIndirectBuffer.get(); }
-    GPUBuffer* GetParticlesDataBuffer() const { return mParticlesDataBuffer.get(); }
-    GPUBuffer* GetIndicesBuffer() const { return mIndicesBuffer.get(); }
-
 private:
+    void UpdateDirtyEmitters(CommandList& commandList);
+    void UpdateEmitters(CommandList& commandList, const std::vector<GPUEmitter*>& enabledEmitters);
+    void SpawnParticles(CommandList& commandList, const std::vector<GPUEmitter*>& enabledEmitters);
+    void UpdateParticles(CommandList& commandList, const std::vector<GPUEmitter*>& enabledEmitters);
+
     ObjectPool<GPUEmitterTemplate> mEmitterTemplatesPool;
     ObjectPool<GPUEmitter> mEmittersPool;
 

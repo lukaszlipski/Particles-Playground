@@ -5,6 +5,8 @@ GPUEmitter::GPUEmitter(GPUParticleSystem* particleSystem, GPUEmitterTemplateHand
     : mParticleSystem(particleSystem)
     , mTemplateHandle(emitterTemplate)
 {
+    Assert(maxParticles > 0);
+
     mParticleAllocation = mParticleSystem->AllocateParticles(maxParticles);
 
     mConstantData.MaxParticles = maxParticles;

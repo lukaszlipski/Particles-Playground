@@ -26,7 +26,7 @@ struct EmitterConstantData
 struct EmitterStatusData
 {
     uint32_t CurrentSeed = 0;
-    uint32_t AliveParticles = 0;
+    uint32_t FreeListPointer = 0;
     uint32_t ParticlesToSpawn = 0;
     uint32_t ParticlesToUpdate = 0;
     float SpawnAccTime = 0;

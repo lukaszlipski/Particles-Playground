@@ -62,8 +62,8 @@ void GPUParticleSystem::Update(CommandList& commandList)
     });
     
     UpdateEmitters(commandList, enabledEmitters);
-    SpawnParticles(commandList, enabledEmitters);
     UpdateParticles(commandList, enabledEmitters);
+    SpawnParticles(commandList, enabledEmitters);
 }
 
 void GPUParticleSystem::UpdateDirtyEmitters(CommandList& commandList)
@@ -207,10 +207,11 @@ void GPUParticleSystem::UpdateEmitters(CommandList& commandList, const std::vect
 
     {
         std::vector<D3D12_RESOURCE_BARRIER> barriers;
-        barriers.reserve(2);
+        barriers.reserve(3);
 
-        mSpawnIndirectBuffer->SetCurrentUsage(BufferUsage::Indirect, barriers);
+        barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::UAV(mEmitterStatusBuffer->GetResource()));
         barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::UAV(mDrawIndirectBuffer->GetResource()));
+        mSpawnIndirectBuffer->SetCurrentUsage(BufferUsage::Indirect, barriers);
 
         commandList->ResourceBarrier(static_cast<uint32_t>(barriers.size()), barriers.data());
     }
@@ -223,9 +224,11 @@ void GPUParticleSystem::SpawnParticles(CommandList& commandList, const std::vect
     ShaderParametersLayout spawnLayout;
     spawnLayout.SetConstant(0, 0, 1, D3D12_SHADER_VISIBILITY_ALL);
     spawnLayout.SetSRV(1, 0, D3D12_SHADER_VISIBILITY_ALL);
-    spawnLayout.SetSRV(2, 1, D3D12_SHADER_VISIBILITY_ALL);
-    spawnLayout.SetUAV(3, 0, D3D12_SHADER_VISIBILITY_ALL);
-    spawnLayout.SetUAV(4, 1, D3D12_SHADER_VISIBILITY_ALL);
+    spawnLayout.SetUAV(2, 0, D3D12_SHADER_VISIBILITY_ALL);
+    spawnLayout.SetUAV(3, 1, D3D12_SHADER_VISIBILITY_ALL);
+    spawnLayout.SetUAV(4, 2, D3D12_SHADER_VISIBILITY_ALL);
+    spawnLayout.SetUAV(5, 3, D3D12_SHADER_VISIBILITY_ALL);
+    spawnLayout.SetUAV(6, 4, D3D12_SHADER_VISIBILITY_ALL);
 
     for (GPUEmitter* emitter : enabledEmitters)
     {
@@ -238,9 +241,11 @@ void GPUParticleSystem::SpawnParticles(CommandList& commandList, const std::vect
         ShaderParameters spawnParams;
         spawnParams.SetConstant(0, emitter->GetEmitterIndexGPU());
         spawnParams.SetSRV(1, *mEmitterConstantBuffer);
-        spawnParams.SetSRV(2, *mEmitterStatusBuffer);
-        spawnParams.SetUAV(3, *mParticlesDataBuffer);
-        spawnParams.SetUAV(4, *mFreeIndicesBuffer);
+        spawnParams.SetUAV(2, *mParticlesDataBuffer);
+        spawnParams.SetUAV(3, *mFreeIndicesBuffer);
+        spawnParams.SetUAV(4, *mIndicesBuffer);
+        spawnParams.SetUAV(5, *mDrawIndirectBuffer);
+        spawnParams.SetUAV(6, *mEmitterStatusBuffer);
         spawnParams.Bind<false>(commandList, spawnLayout);
 
         const uint32_t dispatchOffset = emitter->GetEmitterIndexGPU() * sizeof(D3D12_DISPATCH_ARGUMENTS);
@@ -249,10 +254,9 @@ void GPUParticleSystem::SpawnParticles(CommandList& commandList, const std::vect
 
     {
         std::vector<D3D12_RESOURCE_BARRIER> barriers;
-        barriers.reserve(2);
+        barriers.reserve(1);
 
-        barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::UAV(mParticlesDataBuffer->GetResource()));
-        barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::UAV(mFreeIndicesBuffer->GetResource()));
+        mDrawIndirectBuffer->SetCurrentUsage(BufferUsage::Indirect, barriers);
 
         commandList->ResourceBarrier(static_cast<uint32_t>(barriers.size()), barriers.data());
     }
@@ -307,9 +311,13 @@ void GPUParticleSystem::UpdateParticles(CommandList& commandList, const std::vec
 
     {
         std::vector<D3D12_RESOURCE_BARRIER> barriers;
-        barriers.reserve(1);
+        barriers.reserve(5);
 
-        mDrawIndirectBuffer->SetCurrentUsage(BufferUsage::Indirect, barriers);
+        barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::UAV(mParticlesDataBuffer->GetResource()));
+        barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::UAV(mEmitterStatusBuffer->GetResource()));
+        barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::UAV(mIndicesBuffer->GetResource()));
+        barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::UAV(mFreeIndicesBuffer->GetResource()));
+        barriers.emplace_back(CD3DX12_RESOURCE_BARRIER::UAV(mDrawIndirectBuffer->GetResource()));
 
         commandList->ResourceBarrier(static_cast<uint32_t>(barriers.size()), barriers.data());
     }
