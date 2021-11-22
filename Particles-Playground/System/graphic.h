@@ -1,6 +1,6 @@
 #pragma once
 #include "fence.h"
-#include "pix3.h"
+#include "WinPixEventRuntime/pix3.h"
 
 class CPUDescriptorHeap;
 class GPUDescriptorHeap;

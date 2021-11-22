@@ -213,7 +213,6 @@
       <Filter>Header Files</Filter>
     </None>
     <None Include="Shaders\Source\screen.hlsli" />
-    <None Include="packages.config" />
     <None Include="Shaders\default.hlsli" />
     <None Include="Shaders\screen.hlsli" />
     <None Include="Shaders\psdefault.hlsl" />
