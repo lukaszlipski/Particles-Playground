@@ -6,7 +6,8 @@ using VertexFormatDescRef = VertexFormatDesc*;
 template<typename T>
 VertexFormatDescRef GetVertexFormatDesc()
 {
-    static_assert(false, "Cannot find VertexFormatDesc for given Vertex structure");
+    // #NOTE: Have to make static_assert condition dependent on the template argument to disable the compiler's diagnostics when the function is not instantiated.
+    static_assert(std::is_same_v<T, std::false_type>, "Cannot find VertexFormatDesc for given Vertex structure");
 }
 
 // None
