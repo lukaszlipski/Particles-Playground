@@ -14,10 +14,16 @@
 #include "System/pipelinestate.h"
 #include "System/shaderparameterslayout.h"
 #include "System/shadermanager.h"
+#include "System/transientresourceallocator.h"
+#include "System/rendergraph.h"
 #include "Graphics/camera.h"
 #include "Graphics/gpuparticlesystem.h"
 #include "Utilities/memory.h"
 #include "Utilities/debug.h"
+
+#include "Graphics/RenderGraph/gpuparticlesystemrendernodes.h"
+#include "Graphics/RenderGraph/fullscreennodes.h"
+#include "Graphics/RenderGraph/miscnodes.h"
 
 class Engine
 {

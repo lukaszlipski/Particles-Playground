@@ -2,8 +2,11 @@
 #include "commandlist.h"
 #include "cpudescriptorheap.h"
 
-GPUBuffer::GPUBuffer(uint32_t elemSize, uint32_t numElems /*= 1*/, BufferUsage usage /*= BufferUsage::All*/)
-    : mNumElems(numElems), mElemSize(elemSize), mUsage(usage)
+GPUBuffer::GPUBuffer(uint32_t elemSize, uint32_t numElems, BufferUsage usage, HeapAllocationInfo* heapAllocInfo)
+    : ResourceBase(ResourceTraits<GPUBuffer>::Type)
+    , mNumElems(numElems)
+    , mElemSize(elemSize)
+    , mUsage(usage)
 {
     if      (HasBufferUsage(BufferUsage::Constant))         { mCurrentUsage = BufferUsage::Constant; }
     else if (HasBufferUsage(BufferUsage::Structured))       { mCurrentUsage = BufferUsage::Structured; }
@@ -22,8 +25,17 @@ GPUBuffer::GPUBuffer(uint32_t elemSize, uint32_t numElems /*= 1*/, BufferUsage u
         desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
 
-    const CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_DEFAULT);
-    const HRESULT hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &desc, GetCurrentResourceState(), nullptr, IID_PPV_ARGS(&mResource));
+    HRESULT hr = E_HANDLE;
+    if (heapAllocInfo)
+    {
+        Assert(heapAllocInfo->IsValid());
+        hr = device->CreatePlacedResource(heapAllocInfo->mHeap, heapAllocInfo->mOffset, &desc, GetCurrentResourceState(), nullptr, IID_PPV_ARGS(&mResource));
+    }
+    else
+    {
+        const CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_DEFAULT);
+        hr = device->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &desc, GetCurrentResourceState(), nullptr, IID_PPV_ARGS(&mResource));
+    }
     Assert(SUCCEEDED(hr));
 
     CreateViews();
@@ -58,12 +70,21 @@ void GPUBuffer::Unmap(CommandList& cmdList)
 
     mTemporaryMapResource->Unmap();
 
-    const CD3DX12_RESOURCE_BARRIER before = CD3DX12_RESOURCE_BARRIER::Transition(mResource, GetCurrentResourceState(), D3D12_RESOURCE_STATE_COPY_DEST);
-    const CD3DX12_RESOURCE_BARRIER after = CD3DX12_RESOURCE_BARRIER::Transition(mResource, D3D12_RESOURCE_STATE_COPY_DEST, GetCurrentResourceState());
+    const bool needsTransition = mCurrentUsage != BufferUsage::CopyDst;
 
-    cmdList->ResourceBarrier(1, &before);
+    if (needsTransition)
+    {
+        const CD3DX12_RESOURCE_BARRIER before = CD3DX12_RESOURCE_BARRIER::Transition(mResource, GetCurrentResourceState(), D3D12_RESOURCE_STATE_COPY_DEST);
+        cmdList->ResourceBarrier(1, &before);
+    }
+
     cmdList->CopyBufferRegion(mResource, mMappedRangeStart, mTemporaryMapResource->GetResource(), mTemporaryMapResource->GetStartRange(), mMappedRangeEnd - mMappedRangeStart);
-    cmdList->ResourceBarrier(1, &after);
+
+    if (needsTransition)
+    {
+        const CD3DX12_RESOURCE_BARRIER after = CD3DX12_RESOURCE_BARRIER::Transition(mResource, D3D12_RESOURCE_STATE_COPY_DEST, GetCurrentResourceState());
+        cmdList->ResourceBarrier(1, &after);
+    }
 
     mTemporaryMapResource = nullptr;
 }
@@ -86,6 +107,10 @@ D3D12_RESOURCE_STATES GPUBuffer::GetResourceState(BufferUsage usage) const
         return D3D12_RESOURCE_STATE_INDEX_BUFFER;
     case BufferUsage::Indirect:
         return D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT;
+    case BufferUsage::CopyDst:
+        return D3D12_RESOURCE_STATE_COPY_DEST;
+    case BufferUsage::CopySrc:
+        return D3D12_RESOURCE_STATE_COPY_SOURCE;
     case BufferUsage::All:
         return D3D12_RESOURCE_STATE_GENERIC_READ;
     default:
@@ -172,14 +197,7 @@ void GPUBuffer::SetCurrentUsage(BufferUsage usage, std::vector<D3D12_RESOURCE_BA
 
 GPUBuffer::~GPUBuffer()
 {
-    if (mResource)
-    {
-        mResource->Release();
-        mResource = nullptr;
-    }
-
     if (mCBVHandle) { Graphic::Get().GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Free(*mCBVHandle); }
     if (mSRVHandle) { Graphic::Get().GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Free(*mSRVHandle); }
     if (mUAVHandle) { Graphic::Get().GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Free(*mUAVHandle); }
-    
 }

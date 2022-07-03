@@ -20,6 +20,7 @@ using namespace DirectX;
 #include <array>
 #include <vector>
 #include <map>
+#include <set>
 #include <type_traits>
 #include <random>
 #include <chrono>

@@ -161,6 +161,9 @@
     <ClCompile Include="Graphics\gpuemitter.cpp" />
     <ClCompile Include="Graphics\gpuemittertemplate.cpp" />
     <ClCompile Include="Graphics\gpuparticlesystem.cpp" />
+    <ClCompile Include="Graphics\RenderGraph\fullscreennodes.cpp" />
+    <ClCompile Include="Graphics\RenderGraph\gpuparticlesystemrendernodes.cpp" />
+    <ClCompile Include="Graphics\RenderGraph\miscnodes.cpp" />
     <ClCompile Include="main.cpp" />
     <None Include="Shaders\emitterupdate.hlsl">
       <FileType>Document</FileType>
@@ -181,6 +184,7 @@
     </ClCompile>
     <ClCompile Include="System\commandlist.cpp" />
     <ClCompile Include="System\cpudescriptorheap.cpp" />
+    <ClCompile Include="System\dependencygraph.cpp" />
     <ClCompile Include="System\engine.cpp" />
     <ClCompile Include="System\fence.cpp" />
     <ClCompile Include="System\globaltimer.cpp" />
@@ -191,11 +195,13 @@
     <ClCompile Include="System\meshmanager.cpp" />
     <ClCompile Include="System\pipelinestate.cpp" />
     <ClCompile Include="System\psomanager.cpp" />
+    <ClCompile Include="System\rendergraph.cpp" />
     <ClCompile Include="System\sampler.cpp" />
     <ClCompile Include="System\shadermanager.cpp" />
     <ClCompile Include="System\shaderparameters.cpp" />
     <ClCompile Include="System\shaderparameterslayout.cpp" />
     <ClCompile Include="System\texture.cpp" />
+    <ClCompile Include="System\transientresourceallocator.cpp" />
     <ClCompile Include="System\window.cpp" />
     <ClCompile Include="Utilities\circularallocator.cpp" />
     <ClCompile Include="Utilities\linearallocator.cpp" />
@@ -212,8 +218,15 @@
     <ClInclude Include="Graphics\gpuemitter.h" />
     <ClInclude Include="Graphics\gpuemittertemplate.h" />
     <ClInclude Include="Graphics\gpuparticlesystem.h" />
+    <ClInclude Include="Graphics\RenderGraph\fullscreennodes.h" />
+    <ClInclude Include="Graphics\RenderGraph\gpuparticlesystemrendernodes.h" />
+    <ClInclude Include="Graphics\RenderGraph\miscnodes.h" />
     <ClInclude Include="Includes\d3dx12.h" />
+    <ClInclude Include="System\dependencygraph.h" />
+    <ClInclude Include="System\rendergraph.h" />
+    <ClInclude Include="System\rendergraphcommon.h" />
     <ClInclude Include="System\shader.h" />
+    <ClInclude Include="System\transientresourceallocator.h" />
     <ClInclude Include="Utilities\objectpool.h" />
     <ClInclude Include="Utilities\random.h" />
     <ClInclude Include="Utilities\string.h" />

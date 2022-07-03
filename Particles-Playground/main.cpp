@@ -3,36 +3,6 @@
 int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int32_t nShowCmd)
 {
     Engine::Get().Startup();
-   
-    uint32_t constantBufferSize = (16 + 16) * sizeof(float);
-    constantBufferSize = AlignPow2(constantBufferSize, 256U);
-
-    std::unique_ptr<GPUBuffer> constantBuffer = std::make_unique<GPUBuffer>(constantBufferSize, 1, BufferUsage::Constant);
-    constantBuffer->SetDebugName(L"ConstantBuffer");
-
-    // Prepare a camera
-    Camera camera({ 0, 0,-30,1 }, { 0, 0, 1,0 });
-    {
-        CommandList commandList(QueueType::Direct);
-
-        struct VSContants
-        {
-            XMMATRIX Projection;
-            XMMATRIX View;
-        };
-
-        VSContants data;
-        data.Projection = camera.GetProjection();
-        data.View = camera.GetView();
-
-        uint8_t* dstData = constantBuffer->Map();
-
-        memcpy(dstData, &data, sizeof(VSContants));
-
-        constantBuffer->Unmap(commandList);
-
-        commandList.Submit();
-    }
 
     GPUParticleSystem gpuParticlesSystem;
     gpuParticlesSystem.Init();
@@ -86,110 +56,48 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
     GPUEmitterHandle emitter2 = gpuParticlesSystem.CreateEmitter(emitterTemplateHandle2, 200);
     gpuParticlesSystem.GetEmitter(emitter2)->SetSpawnRate(20.0f).SetParticleLifeTime(1.0f).SetParticleColor({ 0,0.5f,1,1 }).SetPosition({ 20,0,0 }).SetLoopTime(10);
 
-    std::unique_ptr<Texture2D> renderTarget = std::make_unique<Texture2D>(Window::Get().GetWidth(), Window::Get().GetHeight(), TextureFormat::R8G8B8A8, TextureUsage::RenderTarget | TextureUsage::ShaderResource);
-    renderTarget->SetDebugName(L"TestRenderTarget");
-
-    std::unique_ptr<Texture2D> depthBuffer = std::make_unique<Texture2D>(Window::Get().GetWidth(), Window::Get().GetHeight(), TextureFormat::D32, TextureUsage::DepthWrite);
-    depthBuffer->SetDebugName(L"DepthBuffer");
-
-    std::unique_ptr<Texture2D> texture = std::make_unique<Texture2D>(100, 100, TextureFormat::R32G32B32A32, TextureUsage::ShaderResource | TextureUsage::CopyDst);
-    texture->SetDebugName(L"TestTexture");
-
-    { // Generate a simple texture
-        uint8_t* data = texture->Map();
-    
-        float* floatData = reinterpret_cast<float*>(data);
-
-        for (uint32_t y = 0; y < texture->GetHeight(); ++y)
-        {
-            for (uint32_t x = 0; x < texture->GetWidth(); ++x, floatData += 4)
-            {
-                floatData[0] = x / static_cast<float>(texture->GetWidth());
-                floatData[1] = y / static_cast<float>(texture->GetHeight());
-                floatData[2] = 0.0f;
-                floatData[3] = 1.0f;
-            }
-        
-            floatData += texture->GetRowOffset() / sizeof(float);
-        }
-        
-        CommandList commandList(QueueType::Direct);    
-        texture->Unmap(commandList);
-        commandList.Submit();
-    }
-
     Engine::Get().PostStartup();
     
+    TransientResourceAllocator transientAllocator;
+    transientAllocator.Init();
+
+    RenderGraph graph;
+    graph.AddExternalGPUBuffer(RESOURCEID("EmitterConstantBuffer"), gpuParticlesSystem.GetEmitterConstantBuffer());
+    graph.AddExternalGPUBuffer(RESOURCEID("EmitterStatusBuffer"), gpuParticlesSystem.GetEmitterStatusBuffer());
+    graph.AddExternalGPUBuffer(RESOURCEID("EmitterIndexBuffer"), gpuParticlesSystem.GetEmitterIndexBuffer());
+    graph.AddExternalGPUBuffer(RESOURCEID("DrawIndirectBuffer"), gpuParticlesSystem.GetDrawIndirectBuffer());
+    graph.AddExternalGPUBuffer(RESOURCEID("FreeIndicesBuffer"), gpuParticlesSystem.GetFreeIndicesBuffer());
+    graph.AddExternalGPUBuffer(RESOURCEID("ParticlesDataBuffer"), gpuParticlesSystem.GetParticlesDataBuffer());
+
+    graph.AddNode<PrepareSceneBufferNode>();
+    graph.AddNode<GPUParticleSystemUpdateDirtyEmittersNode>();
+    graph.AddNode<GPUParticleSystemDirtyEmittersFreeIndicesNode>();
+    graph.AddNode<GPUParticleSystemUpdateEmittersNode>();
+    graph.AddNode<GPUParticleSystemUpdateParticlesNode>();
+    graph.AddNode<GPUParticleSystemSpawnParticlesNode>();
+    graph.AddNode<GPUParticleSystemDrawParticlesNode>();
+    graph.AddNode<PresentToScreenNode>(true);
+
+    graph.Setup();
+
+    Camera camera({ 0, 0, -30, 1 }, { 0, 0, 1, 0 });
+
+    SceneData sceneData;
+    sceneData.mGPUParticleSystem = &gpuParticlesSystem;
+    sceneData.mCamera = &camera;
+
     while (Window::Get().IsRunning())
     {
         Engine::Get().PreUpdate();
 
-        GlobalTimer& timer = Engine::Get().GetTimer();
+        transientAllocator.PreUpdate();
+
+        //GlobalTimer& timer = Engine::Get().GetTimer();
         //OutputDebugMessage("Elapsed: %f, Delta: %f\n", timer.GetElapsedTime(), timer.GetDeltaTime());
 
-        {
-            // Record commands
-            CommandList commandList(QueueType::Direct);
+        graph.Execute(transientAllocator, sceneData);
 
-            std::array<ID3D12DescriptorHeap*, 1> descHeaps = { Graphic::Get().GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->GetHeap() };
-            commandList->SetDescriptorHeaps(static_cast<uint32_t>(descHeaps.size()), descHeaps.data());
-
-            gpuParticlesSystem.Update(commandList);
-
-            {
-                std::vector<D3D12_RESOURCE_BARRIER> barriers;
-                renderTarget->SetCurrentUsage(TextureUsage::RenderTarget, false, barriers);
-
-                commandList->ResourceBarrier(static_cast<uint32_t>(barriers.size()), barriers.data());
-
-                FLOAT clearColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-                commandList->ClearRenderTargetView(renderTarget->GetRTV(), clearColor, 0, nullptr);
-
-                commandList->ClearDepthStencilView(depthBuffer->GetDSV(), D3D12_CLEAR_FLAG_DEPTH, 1, 0, 0, nullptr);
-            }
-
-            gpuParticlesSystem.DrawParticles(commandList, constantBuffer.get(), renderTarget.get());
-
-            {
-                std::array< CD3DX12_RESOURCE_BARRIER, 1> barriers;
-                barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(Graphic::Get().GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-                commandList->ResourceBarrier(static_cast<uint32_t>(barriers.size()), barriers.data());
-            }
-
-            // Render on screen
-            Sampler defaultSampler;
-
-            ShaderParametersLayout screenLayout;
-            screenLayout.SetSRV(0, 0, D3D12_SHADER_VISIBILITY_PIXEL);
-            screenLayout.SetStaticSampler(0, defaultSampler, D3D12_SHADER_VISIBILITY_PIXEL);
-
-            GraphicPipelineState screenState;
-            screenState.SetVS(VS_Screen);
-            screenState.SetPS(PS_Screen);
-            screenState.Bind(commandList, screenLayout);
-            
-            ShaderParameters screenParams;
-            screenParams.SetSRV(0, *renderTarget);
-            screenParams.Bind<true>(commandList, screenLayout);
-            
-            MeshManager::Get().Bind(commandList, MeshType::Square);
-            
-            const CD3DX12_CPU_DESCRIPTOR_HANDLE rtHandle = Graphic::Get().GetCurrentRenderTargetHandle();
-            commandList->OMSetRenderTargets(1, &rtHandle, false, nullptr);
-
-            MeshManager::Get().Draw(commandList, MeshType::Square, 1);
-            
-            {
-                std::array< CD3DX12_RESOURCE_BARRIER, 1> barriers;
-                barriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(Graphic::Get().GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-
-                commandList->ResourceBarrier(static_cast<uint32_t>(barriers.size()), barriers.data());
-            }
-
-            commandList.Submit();
-        }
-
+        gpuParticlesSystem.PostUpdate();
         Engine::Get().PostUpdate();
     }
 
@@ -200,11 +108,8 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
 
     Engine::Get().PreShutdown();
 
+    transientAllocator.Free();
     gpuParticlesSystem.Free();
-    texture.reset();
-    depthBuffer.reset();
-    renderTarget.reset();
-    constantBuffer.reset();
 
     Engine::Get().Shutdown();
 

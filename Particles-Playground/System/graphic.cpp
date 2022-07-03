@@ -17,6 +17,25 @@ bool Graphic::Startup()
 
     if (FAILED(D3D12CreateDevice(mAdapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&mDevice)))) { return false; }
 
+    { // Workaround for the D3D12 ERROR on Windows 11
+
+        ID3D12InfoQueue* infoQueue;
+        mDevice->QueryInterface(IID_PPV_ARGS(&infoQueue));
+
+        if (infoQueue)
+        {
+            D3D12_MESSAGE_ID hide[] =
+            {
+                D3D12_MESSAGE_ID_RESOURCE_BARRIER_MISMATCHING_COMMAND_LIST_TYPE,
+            };
+
+            D3D12_INFO_QUEUE_FILTER filter = {};
+            filter.DenyList.NumIDs = static_cast<uint32_t>(std::size(hide));
+            filter.DenyList.pIDList = hide;
+            infoQueue->AddStorageFilterEntries(&filter);
+        }
+    }
+
     // Get RTV and CB descriptor size for current device
     mRTVHandleSize = mDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     mCBVHandleSize = mDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);

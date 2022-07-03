@@ -36,7 +36,7 @@ enum class TextureFormat
 class Texture2D : public ResourceBase
 {
 public:
-    Texture2D(uint32_t width, uint32_t height, TextureFormat format, TextureUsage usage = TextureUsage::All);
+    Texture2D(uint32_t width, uint32_t height, TextureFormat format, TextureUsage usage = TextureUsage::All, HeapAllocationInfo* heapAllocInfo = nullptr);
     ~Texture2D();
     
     inline TextureFormat GetFormat() const { return mFormat; }
@@ -51,11 +51,13 @@ public:
     uint8_t* Map();
 
     void Unmap(CommandList& cmdList);
-    uint32_t GetSizeForFormat(TextureFormat format) const;
     D3D12_CPU_DESCRIPTOR_HANDLE GetRTV() const;
     D3D12_CPU_DESCRIPTOR_HANDLE GetSRV() const;
     D3D12_CPU_DESCRIPTOR_HANDLE GetDSV() const;
     void SetCurrentUsage(TextureUsage usage, bool pixelShader, std::vector<D3D12_RESOURCE_BARRIER>& barriers);
+    std::optional<D3D12_CLEAR_VALUE> GetClearValue() const;
+
+    static uint32_t GetSizeForFormat(TextureFormat format);
 
 private:
     D3D12_RESOURCE_STATES GetResourceState(TextureUsage usage, bool pixelShader) const;
@@ -76,4 +78,10 @@ private:
 
     UploadBufferTemporaryRangeHandle mTemporaryMapResource = nullptr;
 
+};
+
+template<>
+struct ResourceTraits<Texture2D>
+{
+    static const ResourceType Type = ResourceType::Texture2D;
 };

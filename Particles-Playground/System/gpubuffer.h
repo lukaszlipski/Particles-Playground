@@ -32,7 +32,7 @@ constexpr BufferUsage operator&(BufferUsage lhs, BufferUsage rhs) {
 class GPUBuffer : public ResourceBase
 {
 public:
-    GPUBuffer(uint32_t elemSize, uint32_t numElems = 1, BufferUsage usage = BufferUsage::All);
+    GPUBuffer(uint32_t elemSize, uint32_t numElems = 1, BufferUsage usage = BufferUsage::All, HeapAllocationInfo* heapAllocInfo = nullptr);
 
     ~GPUBuffer();
 
@@ -66,3 +66,10 @@ private:
     std::unique_ptr<CPUDescriptorHandle> mUAVHandle;
 
 };
+
+template<>
+struct ResourceTraits<GPUBuffer>
+{
+    static const ResourceType Type = ResourceType::GPUBuffer;
+};
+

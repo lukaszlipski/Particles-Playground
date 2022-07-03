@@ -3,8 +3,9 @@
 #include "cpudescriptorheap.h"
 #include "commandlist.h"
 
-Texture2D::Texture2D(uint32_t width, uint32_t height, TextureFormat format, TextureUsage usage)
-    : mWidth(width)
+Texture2D::Texture2D(uint32_t width, uint32_t height, TextureFormat format, TextureUsage usage, HeapAllocationInfo* heapAllocInfo)
+    : ResourceBase(ResourceTraits<Texture2D>::Type)
+    , mWidth(width)
     , mHeight(height)
     , mFormat(format)
     , mUsage(usage)
@@ -20,28 +21,35 @@ Texture2D::Texture2D(uint32_t width, uint32_t height, TextureFormat format, Text
     else if (HasTextureUsage(TextureUsage::All))            { mCurrentUsage = TextureUsage::All; }
 
     D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
-    std::optional<D3D12_CLEAR_VALUE> clearValue;
+    std::optional<D3D12_CLEAR_VALUE> clearValue = GetClearValue();
 
     if (HasTextureUsage(TextureUsage::RenderTarget))
     {
         flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-
-        const FLOAT color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-        clearValue = CD3DX12_CLEAR_VALUE(static_cast<DXGI_FORMAT>(mFormat), color);
     }
 
     if (HasTextureUsage(TextureUsage::DepthWrite) || HasTextureUsage(TextureUsage::DepthRead))
     {
         flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-        clearValue = CD3DX12_CLEAR_VALUE(static_cast<DXGI_FORMAT>(mFormat), 1, 0);
     }
 
     const uint32_t mipCount = 0;
 
     D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(static_cast<DXGI_FORMAT>(format), width, height, 1, mipCount, 1, 0, flags);
-    CD3DX12_HEAP_PROPERTIES props(D3D12_HEAP_TYPE_DEFAULT);
-    const HRESULT hr = device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc, GetCurrentResourceState(), clearValue.has_value() ? &clearValue.value() : nullptr, IID_PPV_ARGS(&mResource));
+
+    HRESULT hr = E_HANDLE;
+    if (heapAllocInfo)
+    {
+        Assert(heapAllocInfo->IsValid());
+        hr = device->CreatePlacedResource(heapAllocInfo->mHeap, heapAllocInfo->mOffset, &desc, GetCurrentResourceState(),
+            clearValue.has_value() ? &clearValue.value() : nullptr, IID_PPV_ARGS(&mResource));
+    }
+    else
+    {
+        CD3DX12_HEAP_PROPERTIES props(D3D12_HEAP_TYPE_DEFAULT);
+        hr = device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc, GetCurrentResourceState(), 
+            clearValue.has_value() ? &clearValue.value() : nullptr, IID_PPV_ARGS(&mResource));
+    }
     Assert(SUCCEEDED(hr));
 
     mSize = static_cast<uint32_t>(GetRequiredIntermediateSize(mResource, 0, mipCount + 1));
@@ -126,7 +134,24 @@ void Texture2D::SetCurrentUsage(TextureUsage usage, bool pixelShader, std::vecto
     mUseByPixelShader = pixelShader;
 }
 
-uint32_t Texture2D::GetSizeForFormat(TextureFormat format) const
+std::optional<D3D12_CLEAR_VALUE> Texture2D::GetClearValue() const
+{
+    std::optional<D3D12_CLEAR_VALUE> clearValue;
+
+    if (HasTextureUsage(TextureUsage::RenderTarget))
+    {
+        const FLOAT color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+        clearValue = CD3DX12_CLEAR_VALUE(static_cast<DXGI_FORMAT>(mFormat), color);
+    }
+    if (HasTextureUsage(TextureUsage::DepthWrite) || HasTextureUsage(TextureUsage::DepthRead))
+    {
+        clearValue = CD3DX12_CLEAR_VALUE(static_cast<DXGI_FORMAT>(mFormat), 1, 0);
+    }
+
+    return clearValue;
+}
+
+uint32_t Texture2D::GetSizeForFormat(TextureFormat format)
 {
     switch (format)
     {
