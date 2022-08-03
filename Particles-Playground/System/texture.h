@@ -3,6 +3,7 @@
 #include "gpubufferuploadmanager.h"
 
 class CPUDescriptorHandle;
+class GPUBindlessDescriptorHandle;
 class CommandList;
 
 using TextureUsageType = uint8_t;
@@ -54,6 +55,8 @@ public:
     D3D12_CPU_DESCRIPTOR_HANDLE GetRTV() const;
     D3D12_CPU_DESCRIPTOR_HANDLE GetSRV() const;
     D3D12_CPU_DESCRIPTOR_HANDLE GetDSV() const;
+    uint32_t GetSRVIndex() const;
+
     void SetCurrentUsage(TextureUsage usage, bool pixelShader, std::vector<D3D12_RESOURCE_BARRIER>& barriers);
     std::optional<D3D12_CLEAR_VALUE> GetClearValue() const;
 
@@ -75,6 +78,8 @@ private:
     std::unique_ptr<CPUDescriptorHandle> mRTVHandle;
     std::unique_ptr<CPUDescriptorHandle> mSRVHandle;
     std::unique_ptr<CPUDescriptorHandle> mDSVHandle;
+
+    std::unique_ptr<GPUBindlessDescriptorHandle> mSRVBindlessHandle;
 
     UploadBufferTemporaryRangeHandle mTemporaryMapResource = nullptr;
 

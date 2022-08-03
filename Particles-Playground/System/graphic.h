@@ -4,6 +4,10 @@
 
 class CPUDescriptorHeap;
 class GPUDescriptorHeap;
+enum class ShaderType;
+
+//#define DISABLE_DEBUG_LAYER
+//#define DISABLE_RESOURCE_DESCRIPTOR_HEAP
 
 enum class QueueType
 {
@@ -59,6 +63,16 @@ public:
     inline Fence* GetCurrentFence() { return mFences[GetCurrentFrameIndex()].get(); }
     inline ID3D12CommandSignature* GetDefaultDrawCommandSignature() const { return mDefaultDrawCommandSignature; }
     inline ID3D12CommandSignature* GetDefaultDispatchCommandSignature() const { return mDefaultDispatchCommandSignature; }
+    inline D3D_SHADER_MODEL GetSM() const { return mHighestShaderModel; }
+    inline const D3D12_FEATURE_DATA_D3D12_OPTIONS& GetDX12Options() const { return mDX12Options; }
+    inline bool SupportsResourceDescriptorHeap() const 
+    { 
+#ifndef DISABLE_RESOURCE_DESCRIPTOR_HEAP
+        return GetSM() >= D3D_SHADER_MODEL_6_6 && GetDX12Options().ResourceBindingTier == D3D12_RESOURCE_BINDING_TIER_3;
+#else
+        return false;
+#endif
+    }
 
     static D3D12_COMMAND_LIST_TYPE GetCommandListType(QueueType type);
     static constexpr uint32_t GetFrameCount() { return mFrameCount; }
@@ -76,6 +90,8 @@ private:
     uint32_t mCBVHandleSize = 0;
     uint32_t mCurrentFrameIdx = 0;
     uint64_t mCurrentFrameNumber = 0;
+    D3D_SHADER_MODEL mHighestShaderModel = D3D_SHADER_MODEL_5_1;
+    D3D12_FEATURE_DATA_D3D12_OPTIONS mDX12Options = {};
 
     ID3D12Debug* mDebugLayer = nullptr;
     IDXGIFactory4* mDXGIFactory = nullptr;

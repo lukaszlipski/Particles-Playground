@@ -64,13 +64,16 @@ void GPUParticleSystemDirtyEmittersFreeIndicesNode::Execute(const RGExecuteConte
 
     struct ResetConstants
     {
+        BindlessDescriptorHandle freeIndicesHandle;
         uint32_t offset;
         uint32_t indicesCount;
     } constants;
 
+    constants.freeIndicesHandle = freeIndicesBuffer->GetUAVIndex();
+
     ShaderParametersLayout resetFreeIndicesLayout;
     resetFreeIndicesLayout.SetConstant(0, 0, sizeof(ResetConstants), D3D12_SHADER_VISIBILITY_ALL);
-    resetFreeIndicesLayout.SetUAV(1, 0, D3D12_SHADER_VISIBILITY_ALL);
+    resetFreeIndicesLayout.SetBindlessHeap(1);
 
     ComputePipelineState resetFreeIndicesState;
     resetFreeIndicesState.SetCS(CS_ResetFreeIndices);
@@ -86,7 +89,6 @@ void GPUParticleSystemDirtyEmittersFreeIndicesNode::Execute(const RGExecuteConte
 
         ShaderParameters resetFreeIndicesParams;
         resetFreeIndicesParams.SetConstant(0, constants);
-        resetFreeIndicesParams.SetUAV(1, *freeIndicesBuffer);
         resetFreeIndicesParams.Bind<false>(commandList, resetFreeIndicesLayout);
 
         uint32_t dispatchCount = Align(size, 64) / 64;
@@ -124,8 +126,14 @@ void GPUParticleSystemUpdateEmittersNode::Execute(const RGExecuteContext& contex
 
     GlobalTimer& timer = Engine::Get().GetTimer();
 
+    struct EmitterUpdateConstants
+    {
+        uint32_t emittersCount;
+        float deltaTime;
+    };
+
     ShaderParametersLayout updateEmitterLayout;
-    updateEmitterLayout.SetConstant(0, 0, sizeof(EmitterUpdateConstants), D3D12_SHADER_VISIBILITY_ALL);
+    updateEmitterLayout.SetConstant(0, 0, sizeof(EmitterUpdateConstants) / sizeof(uint32_t), D3D12_SHADER_VISIBILITY_ALL);
     updateEmitterLayout.SetSRV(1, 0, D3D12_SHADER_VISIBILITY_ALL);
     updateEmitterLayout.SetSRV(2, 1, D3D12_SHADER_VISIBILITY_ALL);
     updateEmitterLayout.SetUAV(3, 1, D3D12_SHADER_VISIBILITY_ALL);

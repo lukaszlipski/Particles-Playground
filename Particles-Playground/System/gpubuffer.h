@@ -1,10 +1,11 @@
 #pragma once
-#include "graphic.h"
-#include "resource.h"
-#include "gpubufferuploadmanager.h"
+#include "System/graphic.h"
+#include "System/resource.h"
+#include "System/gpubufferuploadmanager.h"
 
 class CommandList;
 class CPUDescriptorHandle;
+class GPUBindlessDescriptorHandle;
 
 using BufferUsageType = uint8_t;
 
@@ -47,6 +48,10 @@ public:
     D3D12_CPU_DESCRIPTOR_HANDLE GetCBV();
     D3D12_CPU_DESCRIPTOR_HANDLE GetSRV();
     D3D12_CPU_DESCRIPTOR_HANDLE GetUAV();
+    uint32_t GetCBVIndex() const;
+    uint32_t GetSRVIndex() const;
+    uint32_t GetUAVIndex() const;
+
     void SetCurrentUsage(BufferUsage usage, std::vector<D3D12_RESOURCE_BARRIER>& barriers);
 
 private:
@@ -65,6 +70,9 @@ private:
     std::unique_ptr<CPUDescriptorHandle> mSRVHandle;
     std::unique_ptr<CPUDescriptorHandle> mUAVHandle;
 
+    std::unique_ptr<GPUBindlessDescriptorHandle> mCBVBindlessHandle;
+    std::unique_ptr<GPUBindlessDescriptorHandle> mSRVBindlessHandle;
+    std::unique_ptr<GPUBindlessDescriptorHandle> mUAVBindlessHandle;
 };
 
 template<>

@@ -37,7 +37,7 @@ Range CircularAllocator::Allocate(uint32_t size, uint32_t alignment /*= 1*/)
 
 void CircularAllocator::Free(Range& range)
 {
-    if (!range.IsValid()) { return; }
+    if (!IsAllocationValid(range)) { return; }
 
     const uint64_t potentialReadPtr = range.Start + range.Size;
     if (mReadPointer > mWritePointer)

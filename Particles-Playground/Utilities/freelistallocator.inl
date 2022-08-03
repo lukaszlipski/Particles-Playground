@@ -1,7 +1,7 @@
 template<typename AllocStrategy>
 void FreeListAllocator<AllocStrategy>::Free(Range& range)
 {
-    if (!range.IsValid()) { return; }
+    if (!IsAllocationValid(range)) { return; }
 
     const uint64_t start = range.Start;
     const uint64_t size = range.Size;

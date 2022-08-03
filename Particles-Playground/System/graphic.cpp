@@ -1,7 +1,7 @@
-#include "graphic.h"
-#include "window.h"
-#include "cpudescriptorheap.h"
-#include "gpudescriptorheap.h"
+#include "System/graphic.h"
+#include "System/window.h"
+#include "System/cpudescriptorheap.h"
+#include "System/gpudescriptorheap.h"
 
 Graphic::~Graphic() = default;
 Graphic::Graphic() = default;
@@ -35,6 +35,22 @@ bool Graphic::Startup()
             infoQueue->AddStorageFilterEntries(&filter);
         }
     }
+
+    // Check highest shader model support.
+    D3D_SHADER_MODEL minSM = D3D_SHADER_MODEL_6_2;
+    D3D12_FEATURE_DATA_SHADER_MODEL shaderModel = {};
+    for (int32_t currentSM = D3D_SHADER_MODEL_6_6; currentSM >= minSM; --currentSM)
+    {
+        shaderModel.HighestShaderModel = static_cast<D3D_SHADER_MODEL>(currentSM);
+        if (SUCCEEDED(mDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(D3D12_FEATURE_DATA_SHADER_MODEL))))
+        {
+            mHighestShaderModel = shaderModel.HighestShaderModel;
+            break;
+        }
+    }
+    if (mHighestShaderModel < minSM) { return false; }
+
+    if (FAILED(mDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &mDX12Options, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS)))) { return false; }
 
     // Get RTV and CB descriptor size for current device
     mRTVHandleSize = mDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -249,11 +265,13 @@ D3D12_COMMAND_LIST_TYPE Graphic::GetCommandListType(QueueType type)
 
 bool Graphic::EnableDebugLayer()
 {
+#ifndef DISABLE_DEBUG_LAYER
     if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&mDebugLayer))))
     {
         mDebugLayer->EnableDebugLayer();
         return true;
     }
+#endif
 
     return false;
 }

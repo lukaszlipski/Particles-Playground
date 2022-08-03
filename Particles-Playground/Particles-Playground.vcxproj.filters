@@ -242,6 +242,7 @@
     <ClInclude Include="System\rendergraphcommon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Shaders\bindlesscommon.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Source\default.hlsli" />

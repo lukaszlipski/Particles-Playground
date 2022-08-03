@@ -1,6 +1,7 @@
-#include "gpubuffer.h"
-#include "commandlist.h"
-#include "cpudescriptorheap.h"
+#include "System/gpubuffer.h"
+#include "System/commandlist.h"
+#include "System/cpudescriptorheap.h"
+#include "System/gpudescriptorheap.h"
 
 GPUBuffer::GPUBuffer(uint32_t elemSize, uint32_t numElems, BufferUsage usage, HeapAllocationInfo* heapAllocInfo)
     : ResourceBase(ResourceTraits<GPUBuffer>::Type)
@@ -124,15 +125,19 @@ void GPUBuffer::CreateViews()
     if (HasBufferUsage(BufferUsage::Constant))
     {
         mCBVHandle = std::make_unique<CPUDescriptorHandle>(Graphic::Get().GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Allocate());
+        mCBVBindlessHandle = std::make_unique<GPUBindlessDescriptorHandle>(Graphic::Get().GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Allocate<GPUBindlessDescriptor>());
 
         D3D12_CONSTANT_BUFFER_VIEW_DESC desc{};
         desc.BufferLocation = mResource->GetGPUVirtualAddress();
         desc.SizeInBytes = mNumElems * mElemSize;
         Graphic::Get().GetDevice()->CreateConstantBufferView(&desc, *mCBVHandle);
+        Graphic::Get().GetDevice()->CreateConstantBufferView(&desc, *mCBVBindlessHandle);
+
     }
     if (HasBufferUsage(BufferUsage::Structured))
     {
         mSRVHandle = std::make_unique<CPUDescriptorHandle>(Graphic::Get().GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Allocate());
+        mSRVBindlessHandle = std::make_unique<GPUBindlessDescriptorHandle>(Graphic::Get().GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Allocate<GPUBindlessDescriptor>());
 
         D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
         desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
@@ -141,12 +146,13 @@ void GPUBuffer::CreateViews()
         desc.Buffer.NumElements = mNumElems;
         desc.Buffer.StructureByteStride = mElemSize;
         desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-
         Graphic::Get().GetDevice()->CreateShaderResourceView(mResource, &desc, *mSRVHandle);
+        Graphic::Get().GetDevice()->CreateShaderResourceView(mResource, &desc, *mSRVBindlessHandle);
     }
     if (HasBufferUsage(BufferUsage::UnorderedAccess))
     {
         mUAVHandle = std::make_unique<CPUDescriptorHandle>(Graphic::Get().GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Allocate());
+        mUAVBindlessHandle = std::make_unique<GPUBindlessDescriptorHandle>(Graphic::Get().GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Allocate<GPUBindlessDescriptor>());
 
         D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
         desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
@@ -156,8 +162,8 @@ void GPUBuffer::CreateViews()
         desc.Buffer.StructureByteStride = mElemSize;
         desc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
         //desc.Buffer.CounterOffsetInBytes = mNumElems * mElemSize;
-
         Graphic::Get().GetDevice()->CreateUnorderedAccessView(mResource, nullptr, &desc, *mUAVHandle);
+        Graphic::Get().GetDevice()->CreateUnorderedAccessView(mResource, nullptr, &desc, *mUAVBindlessHandle);
     }
 }
 
@@ -177,6 +183,24 @@ D3D12_CPU_DESCRIPTOR_HANDLE GPUBuffer::GetUAV()
 {
     Assert(HasBufferUsage(BufferUsage::UnorderedAccess));
     return *mUAVHandle;
+}
+
+uint32_t GPUBuffer::GetCBVIndex() const
+{
+    Assert(HasBufferUsage(BufferUsage::Constant));
+    return *mCBVBindlessHandle;
+}
+
+uint32_t GPUBuffer::GetSRVIndex() const
+{
+    Assert(HasBufferUsage(BufferUsage::Structured));
+    return *mSRVBindlessHandle;
+}
+
+uint32_t GPUBuffer::GetUAVIndex() const
+{
+    Assert(HasBufferUsage(BufferUsage::UnorderedAccess));
+    return *mUAVBindlessHandle;
 }
 
 void GPUBuffer::SetCurrentUsage(BufferUsage usage, std::vector<D3D12_RESOURCE_BARRIER>& barriers)
@@ -200,4 +224,8 @@ GPUBuffer::~GPUBuffer()
     if (mCBVHandle) { Graphic::Get().GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Free(*mCBVHandle); }
     if (mSRVHandle) { Graphic::Get().GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Free(*mSRVHandle); }
     if (mUAVHandle) { Graphic::Get().GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Free(*mUAVHandle); }
+
+    if (mCBVBindlessHandle) { Graphic::Get().GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Free(*mCBVBindlessHandle); }
+    if (mSRVBindlessHandle) { Graphic::Get().GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Free(*mSRVBindlessHandle); }
+    if (mUAVBindlessHandle) { Graphic::Get().GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Free(*mUAVBindlessHandle); }
 }

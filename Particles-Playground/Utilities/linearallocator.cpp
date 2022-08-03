@@ -14,7 +14,7 @@ Range LinearAllocator::Allocate(uint32_t size, uint32_t alignment)
 
 void LinearAllocator::Free(Range& range)
 {
-    if (range.IsValid())
+    if (IsAllocationValid(range))
     {
         --mAllocationNum;
         range.Invalidate();

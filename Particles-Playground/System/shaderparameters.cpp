@@ -1,6 +1,6 @@
-#include "shaderparameters.h"
-#include "gpubuffer.h"
-#include "texture.h"
+#include "System/shaderparameters.h"
+#include "System/gpubuffer.h"
+#include "System/texture.h"
 
 // ---
 template<typename T>
@@ -108,7 +108,7 @@ void ShaderParameters::Bind(CommandList& commandList, ShaderParametersLayout& la
             }
             else { Assert(false); }
 
-            GPUDescriptorHandleScoped gpuHandle = Graphic::Get().GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Allocate();
+            GPUDescriptorHandleScoped gpuHandle = Graphic::Get().GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Allocate<GPUStandardDescriptor>();
             Graphic::Get().GetDevice()->CopyDescriptorsSimple(1, gpuHandle, cpuHandle, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
             if constexpr (isGraphics) {
@@ -120,6 +120,19 @@ void ShaderParameters::Bind(CommandList& commandList, ShaderParametersLayout& la
 
         }
         
+    }
+
+    if (!Graphic::Get().SupportsResourceDescriptorHeap() && layout.HasBindlessHeap())
+    {
+        CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(Graphic::Get().GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->GetHeap()->GetGPUDescriptorHandleForHeapStart(), 0, 
+            Graphic::Get().GetHandleSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+
+        if constexpr (isGraphics) {
+            commandList->SetGraphicsRootDescriptorTable(layout.GetBindlessHeapIndex(), gpuHandle);
+        }
+        else {
+            commandList->SetComputeRootDescriptorTable(layout.GetBindlessHeapIndex(), gpuHandle);
+        }
     }
 
     if(!barriers.empty())

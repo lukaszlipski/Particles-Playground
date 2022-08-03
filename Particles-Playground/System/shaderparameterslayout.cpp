@@ -1,6 +1,15 @@
 #include "System/shaderparameterslayout.h"
 #include "System/sampler.h"
+#include "System/gpudescriptorheap.h"
 #include "Utilities/memory.h"
+#include "Shaders/bindlesscommon.hlsli"
+
+const D3D12_DESCRIPTOR_RANGE_FLAGS g_BindlessFlags = D3D12_DESCRIPTOR_RANGE_FLAG_DESCRIPTORS_VOLATILE | D3D12_DESCRIPTOR_RANGE_FLAG_DATA_VOLATILE;
+std::array<CD3DX12_DESCRIPTOR_RANGE1, 3> g_BindlessRanges = {
+    CD3DX12_DESCRIPTOR_RANGE1(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, GPUDescriptorHeap::BindlessDescriptorNum, 0, BindlessDescriptorRegisterSpace, g_BindlessFlags, 0),
+    CD3DX12_DESCRIPTOR_RANGE1(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, GPUDescriptorHeap::BindlessDescriptorNum, 0, BindlessDescriptorRegisterSpace, g_BindlessFlags, 0),
+    CD3DX12_DESCRIPTOR_RANGE1(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, GPUDescriptorHeap::BindlessDescriptorNum, 0, BindlessDescriptorRegisterSpace, g_BindlessFlags, 0)
+};
 
 ShaderParametersLayout& ShaderParametersLayout::SetCBV(uint32_t idx, uint32_t regIdx, D3D12_SHADER_VISIBILITY visibility)
 {
@@ -54,6 +63,13 @@ ShaderParametersLayout& ShaderParametersLayout::SetStaticSampler(uint32_t regIdx
     return *this;
 }
 
+ShaderParametersLayout& ShaderParametersLayout::SetBindlessHeap(uint32_t idx)
+{
+    Assert(idx != std::numeric_limits<uint32_t>::max());
+    mBindlessIndex = idx;
+    return *this;
+}
+
 uint32_t ShaderParametersLayout::Hash() const
 {
     if (mParams.empty()) { return 0; }
@@ -64,11 +80,14 @@ uint32_t ShaderParametersLayout::Hash() const
     // Allocate on the stack enough memory to hold an aligned array that will be used to calculate a hash value
     const uint32_t parametersSize = sizeof(ParameterVar) * (biggestIdx + 1);
     const uint32_t staticSamplerSize = sizeof(CD3DX12_STATIC_SAMPLER_DESC) * static_cast<uint32_t>(mStaticSamplers.size());
+    const uint32_t bindlessSize = sizeof(uint32_t);
 
-    const uint32_t size = parametersSize + staticSamplerSize;
+    const uint32_t size = parametersSize + staticSamplerSize + bindlessSize;
     const uint32_t extendedSize = AlignPow2(static_cast<uint32_t>(size), 4U);
-    void* addr = alloca(extendedSize + 4 - 1);
-    memset(addr, 0, extendedSize + 4 - 1);
+    void* addr = _malloca(extendedSize);
+    Assert(addr);
+
+    memset(addr, 0, extendedSize);
     
     // Prepare pointers
     uint8_t* start = reinterpret_cast<uint8_t*>(AlignPow2(reinterpret_cast<uintptr_t>(addr), 4));
@@ -88,6 +107,8 @@ uint32_t ShaderParametersLayout::Hash() const
         *current = mStaticSamplers[i];
     }
 
+    *reinterpret_cast<uint32_t*>(start + parametersSize + staticSamplerSize) = GetBindlessHeapIndex();
+
     return HashRange(reinterpret_cast<uint32_t*>(start), reinterpret_cast<uint32_t*>(end));
 }
 
@@ -96,7 +117,12 @@ RootParameters ShaderParametersLayout::GetParameters() const
     if (mParams.empty()) { return {}; }
 
     const auto maxElem = std::max_element(mParams.begin(), mParams.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
-    const uint32_t biggestIdx = maxElem->first;
+
+    uint32_t biggestIdx = maxElem->first;
+    if (!Graphic::Get().SupportsResourceDescriptorHeap() && HasBindlessHeap())
+    {
+        biggestIdx = std::max(maxElem->first, GetBindlessHeapIndex());
+    }
 
     RootParameters result{};
     result.Parameters.resize(biggestIdx + 1);
@@ -118,6 +144,11 @@ RootParameters ShaderParametersLayout::GetParameters() const
         {
             Assert(0); // Unsupported parameter type
         }
+    }
+
+    if (!Graphic::Get().SupportsResourceDescriptorHeap() && HasBindlessHeap())
+    {
+        result.Parameters[GetBindlessHeapIndex()].InitAsDescriptorTable(static_cast<uint32_t>(g_BindlessRanges.size()), g_BindlessRanges.data(), D3D12_SHADER_VISIBILITY_ALL);
     }
 
     result.StaticSamplers = mStaticSamplers;

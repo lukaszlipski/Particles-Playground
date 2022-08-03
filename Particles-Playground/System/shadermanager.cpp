@@ -1,6 +1,7 @@
 #include "shadermanager.h"
 #include "Utilities/debug.h"
 #include "Utilities/string.h"
+#include "System/graphic.h"
 
 const std::wstring SHADER_SOURCE_FOLDER = L"Shaders/";
 
@@ -119,9 +120,14 @@ IDxcBlob* ShaderManager::CompileShader(std::string_view sourceCode, ShaderType t
 
     IDxcBlobEncoding* sourceBlob = nullptr;
     mLibrary->CreateBlobWithEncodingFromPinned(sourceCode.data(), static_cast<uint32_t>(sourceCode.size()), CP_UTF8, &sourceBlob);
-    
+
+    std::array defines = { 
+        DxcDefine{ L"ENABLE_RESOURCE_DESCRIPTOR_HEAP", Graphic::Get().SupportsResourceDescriptorHeap() ? L"1" : L"0" }
+    };
+
     IDxcOperationResult* result = nullptr;
-    Assert(SUCCEEDED(mCompiler->Compile(sourceBlob, shaderPath.data(), entry.data(), GetShaderTargetProfile(type).data(), nullptr, 0, nullptr, 0, mIncludeHandler, &result)));
+    Assert(SUCCEEDED(mCompiler->Compile(sourceBlob, shaderPath.data(), entry.data(), GetShaderTargetProfile(type).data(), 
+        nullptr, 0, defines.data(), static_cast<uint32_t>(defines.size()), mIncludeHandler, &result)));
 
     HRESULT compilationResult;
     result->GetStatus(&compilationResult);
@@ -150,11 +156,16 @@ IDxcBlob* ShaderManager::CompileShader(std::string_view sourceCode, ShaderType t
 
 std::wstring_view ShaderManager::GetShaderTargetProfile(ShaderType type) const
 {
+    std::wstring_view vertexProfiles[] = { L"vs_6_0", L"vs_6_1", L"vs_6_2", L"vs_6_3", L"vs_6_4", L"vs_6_5", L"vs_6_6" };
+    std::wstring_view pixelProfiles[] = { L"ps_6_0", L"ps_6_1", L"ps_6_2", L"ps_6_3", L"ps_6_4", L"ps_6_5", L"ps_6_6" };
+    std::wstring_view computeProfiles[] = { L"cs_6_0", L"cs_6_1", L"cs_6_2", L"cs_6_3", L"cs_6_4", L"cs_6_5", L"cs_6_6" };
+
+    D3D_SHADER_MODEL sm = Graphic::Get().GetSM();
     switch (type)
     {
-        case ShaderType::Vertex: return L"vs_6_0";
-        case ShaderType::Pixel: return L"ps_6_0";
-        case ShaderType::Compute: return L"cs_6_0";
-        default: return L"";
+    case ShaderType::Vertex: return vertexProfiles[sm - D3D_SHADER_MODEL_6_0];
+    case ShaderType::Pixel: return pixelProfiles[sm - D3D_SHADER_MODEL_6_0];
+    case ShaderType::Compute: return computeProfiles[sm - D3D_SHADER_MODEL_6_0];
+    default: return L"";
     }
 }

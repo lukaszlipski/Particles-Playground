@@ -165,6 +165,9 @@
     <ClCompile Include="Graphics\RenderGraph\gpuparticlesystemrendernodes.cpp" />
     <ClCompile Include="Graphics\RenderGraph\miscnodes.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClInclude Include="Shaders\bindlesscommon.hlsli">
+      <FileType>Document</FileType>
+    </ClInclude>
     <None Include="Shaders\emitterupdate.hlsl">
       <FileType>Document</FileType>
     </None>

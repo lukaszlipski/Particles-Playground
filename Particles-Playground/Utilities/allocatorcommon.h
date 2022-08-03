@@ -34,6 +34,7 @@ public:
     virtual Range Allocate(uint32_t size, uint32_t alignment = 1) = 0;
     virtual void Free(Range& range) = 0;
     inline uint32_t GetAllocationNum() const { return mAllocationNum; }
+    inline bool IsAllocationValid(Range& range) { return range.IsValid() && (range.Start >= mStartRange && (range.Start + range.Size) <= mEndRange); }
 
 protected:
     uint64_t mStartRange = 0;

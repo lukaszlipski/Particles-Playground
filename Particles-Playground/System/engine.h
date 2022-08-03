@@ -20,10 +20,10 @@
 #include "Graphics/gpuparticlesystem.h"
 #include "Utilities/memory.h"
 #include "Utilities/debug.h"
-
 #include "Graphics/RenderGraph/gpuparticlesystemrendernodes.h"
 #include "Graphics/RenderGraph/fullscreennodes.h"
 #include "Graphics/RenderGraph/miscnodes.h"
+#include "Shaders/bindlesscommon.hlsli"
 
 class Engine
 {

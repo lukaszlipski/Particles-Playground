@@ -1,7 +1,8 @@
-#include "texture.h"
-#include "graphic.h"
-#include "cpudescriptorheap.h"
-#include "commandlist.h"
+#include "System/texture.h"
+#include "System/graphic.h"
+#include "System/cpudescriptorheap.h"
+#include "System/commandlist.h"
+#include "System/gpudescriptorheap.h"
 
 Texture2D::Texture2D(uint32_t width, uint32_t height, TextureFormat format, TextureUsage usage, HeapAllocationInfo* heapAllocInfo)
     : ResourceBase(ResourceTraits<Texture2D>::Type)
@@ -62,6 +63,8 @@ Texture2D::~Texture2D()
     if (mRTVHandle) { Graphic::Get().GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV)->Free(*mRTVHandle); }
     if (mSRVHandle) { Graphic::Get().GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Free(*mSRVHandle); }
     if (mDSVHandle) { Graphic::Get().GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV)->Free(*mDSVHandle); }
+
+    if (mSRVBindlessHandle) { Graphic::Get().GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Free(*mSRVBindlessHandle); }
 }
 
 uint8_t* Texture2D::Map()
@@ -115,6 +118,12 @@ D3D12_CPU_DESCRIPTOR_HANDLE Texture2D::GetDSV() const
 {
     Assert(HasTextureUsage(TextureUsage::DepthRead) || HasTextureUsage(TextureUsage::DepthWrite));
     return *mDSVHandle;
+}
+
+uint32_t Texture2D::GetSRVIndex() const
+{
+    Assert(HasTextureUsage(TextureUsage::ShaderResource));
+    return *mSRVBindlessHandle;
 }
 
 void Texture2D::SetCurrentUsage(TextureUsage usage, bool pixelShader, std::vector<D3D12_RESOURCE_BARRIER>& barriers)
@@ -211,6 +220,7 @@ void Texture2D::CreateViews()
     if (HasTextureUsage(TextureUsage::ShaderResource))
     {
         mSRVHandle = std::make_unique<CPUDescriptorHandle>(Graphic::Get().GetCPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Allocate());
+        mSRVBindlessHandle = std::make_unique<GPUBindlessDescriptorHandle>(Graphic::Get().GetGPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->Allocate<GPUBindlessDescriptor>());
 
         D3D12_SHADER_RESOURCE_VIEW_DESC desc = {};
         desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
@@ -219,6 +229,7 @@ void Texture2D::CreateViews()
         desc.Texture2D.MipLevels = mMipCount + 1;
 
         Graphic::Get().GetDevice()->CreateShaderResourceView(mResource, &desc, *mSRVHandle);
+        Graphic::Get().GetDevice()->CreateShaderResourceView(mResource, &desc, *mSRVBindlessHandle);
     }
     if (HasTextureUsage(TextureUsage::DepthWrite) || HasTextureUsage(TextureUsage::DepthRead))
     {

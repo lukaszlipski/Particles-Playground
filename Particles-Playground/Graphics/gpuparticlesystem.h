@@ -7,12 +7,6 @@ class GPUBuffer;
 class CommandList;
 class Texture2D;
 
-struct EmitterUpdateConstants
-{
-    uint32_t emittersCount;
-    float deltaTime;
-};
-
 class GPUParticleSystem
 {
 public:

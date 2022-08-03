@@ -3,7 +3,9 @@
 #include "System/commandlist.h"
 #include "System/pipelinestate.h"
 #include "System/shaderparameterslayout.h"
+#include "System/gpudescriptorheap.h"
 #include "Utilities/debug.h"
+#include "Shaders/bindlesscommon.hlsli"
 
 const std::wstring SHADER_FOLDER = L"Shaders/";
 
@@ -65,10 +67,15 @@ ID3D12RootSignature* PSOManager::CompileShaderParameterLayout(const ShaderParame
 
     RootParameters params = layout.GetParameters();
 
+    D3D12_ROOT_SIGNATURE_FLAGS flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+    if (Graphic::Get().SupportsResourceDescriptorHeap() && layout.HasBindlessHeap())
+    {
+        flags |= D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
+    }
+
     CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSigDesc{};
     rootSigDesc.Init_1_1(static_cast<uint32_t>(params.Parameters.size()), params.Parameters.data(),
-                         static_cast<uint32_t>(params.StaticSamplers.size()), params.StaticSamplers.data(),
-                         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+                         static_cast<uint32_t>(params.StaticSamplers.size()), params.StaticSamplers.data(), flags);
 
     ID3DBlob* blob = nullptr;
     ID3DBlob* error = nullptr;
