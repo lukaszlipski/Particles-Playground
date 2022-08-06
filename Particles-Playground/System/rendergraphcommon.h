@@ -14,6 +14,14 @@ class Camera;
 class IRenderNodeBase
 {
 public:
+    IRenderNodeBase() = default;
+    virtual ~IRenderNodeBase() = default;
+
+    IRenderNodeBase(const IRenderNodeBase&) = delete;
+    IRenderNodeBase& operator=(const IRenderNodeBase&) = delete;
+    IRenderNodeBase(IRenderNodeBase&&) = default;
+    IRenderNodeBase& operator=(IRenderNodeBase&&) = default;
+
     virtual void Setup(RGSetupContext& context) = 0;
     virtual void Execute(const RGExecuteContext& context) = 0;
 };
@@ -153,8 +161,8 @@ public:
     RGExecuteContext(std::map<ResourceID, GPUBuffer*>&& availableGPUBuffers, std::map<ResourceID, Texture2D*>&& availableTextures2D, SceneData& sceneData, CommandList& cmdList)
         : mAvailableGPUBuffers(std::move(availableGPUBuffers))
         , mAvailableTextures2D(std::move(availableTextures2D))
-        , mSceneData(sceneData)
         , mCommandList(cmdList)
+        , mSceneData(sceneData)
     { }
 
     ~RGExecuteContext() = default;

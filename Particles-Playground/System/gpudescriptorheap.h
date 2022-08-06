@@ -121,9 +121,9 @@ private:
     template<> Range InternalAllocate<GPUBindlessDescriptor>(uint32_t size);
     template<> Range InternalAllocate<GPUStandardDescriptor>(uint32_t size);
 
+    D3D12_DESCRIPTOR_HEAP_TYPE mType;
     CircularAllocator mStandardAllocator;
     FreeListAllocator<FirstFitStrategy> mBindlessAllocator;
-    D3D12_DESCRIPTOR_HEAP_TYPE mType;
     ID3D12DescriptorHeap* mHeap = nullptr;
     DelayedReleaseContainer mDelayedRelease;
 };

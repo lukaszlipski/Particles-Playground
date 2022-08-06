@@ -28,7 +28,7 @@ void TransientResourceAllocator::PreUpdate()
     const uint64_t currentFrameNum = Graphic::Get().GetCurrentFrameNumber();
     const uint32_t frameCount = Graphic::Get().GetFrameCount();
 
-    mResourcesToFree.remove_if([allocator = &mAllocator, currentFrameNum, frameCount](ResourceToFree& resToFree) {
+    mResourcesToFree.remove_if([currentFrameNum, frameCount](ResourceToFree& resToFree) {
         return resToFree.mFrameNumber + frameCount <= currentFrameNum;
     });
 }

@@ -80,7 +80,7 @@ int32_t WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, i
 
     graph.Setup();
 
-    Camera camera({ 0, 0, -30, 1 }, { 0, 0, 1, 0 });
+    Camera camera( XMVECTOR{ 0, 0, -30, 1 }, XMVECTOR{ 0, 0, 1, 0 });
 
     SceneData sceneData;
     sceneData.mGPUParticleSystem = &gpuParticlesSystem;

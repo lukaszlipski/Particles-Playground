@@ -92,8 +92,7 @@ uint32_t ShaderParametersLayout::Hash() const
     // Prepare pointers
     uint8_t* start = reinterpret_cast<uint8_t*>(AlignPow2(reinterpret_cast<uintptr_t>(addr), 4));
     uint8_t* end = start + AlignPow2(size, 4);
-    ParameterVar* parameters = reinterpret_cast<ParameterVar*>(start);
-    
+
     // Fill the aligned array
     for (const auto& [idx, param] : mParams)
     {

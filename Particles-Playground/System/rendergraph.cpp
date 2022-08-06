@@ -323,8 +323,9 @@ void RenderGraph::ExecuteNodesForCurrentDepth(CommandList& cmdList, const std::v
 {
     for (uint32_t nodeIndex : nodes)
     {
-        Assert(mNodes[nodeIndex]);
-        const char* className = typeid(*mNodes[nodeIndex].get()).name();
+        const IRenderNodeBase* node = mNodes[nodeIndex].get();
+        Assert(node);
+        const char* className = typeid(*node).name();
         PIXScopedEvent(cmdList.Get(), 0, className);
 
         const RGSetupContext& setupContext = mSetupContexts[nodeIndex];

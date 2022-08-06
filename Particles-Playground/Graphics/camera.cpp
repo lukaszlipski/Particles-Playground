@@ -13,7 +13,7 @@ XMMATRIX Camera::GetView() const
 
 XMMATRIX Camera::GetProjection() const
 {
-    const float fov = XMConvertToRadians(90.0f);
+    const float fov = XMConvertToRadians(mFov);
     const float ratio = Window::Get().GetWidth() / static_cast<float>(Window::Get().GetHeight());
     return XMMatrixPerspectiveFovLH(fov, ratio, mNearDist, mFarDist);
 }

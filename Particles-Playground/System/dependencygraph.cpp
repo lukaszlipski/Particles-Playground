@@ -37,14 +37,14 @@ DependencyGraph DependencyGraphBuilder::Build(const std::vector<uint32_t>& start
 
 void DependencyGraphBuilder::PrepareExternalResources(const std::map<ResourceID, GPUBuffer*>& externalGPUBuffers, const std::map<ResourceID, Texture2D*>& externalTextures2D)
 {
-    for (const std::pair<ResourceID, GPUBuffer*>& buffer : externalGPUBuffers)
+    for (const auto& [resID, buffer] : externalGPUBuffers)
     {
-        mResourcesReady[buffer.first] = false;
+        mResourcesReady[resID] = false;
     }
 
-    for (const std::pair<ResourceID, Texture2D*>& texture : externalTextures2D)
+    for (const auto& [resID, texture] : externalTextures2D)
     {
-        mResourcesReady[texture.first] = false;
+        mResourcesReady[resID] = false;
     }
 }
 

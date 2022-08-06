@@ -2,9 +2,9 @@
 #include "System/engine.h"
 
 GPUParticleSystem::GPUParticleSystem() 
-    : mParticlesAllocator(0, MaxParticles)
+    : mEmitterTemplatesPool(MaxEmitterTemplates)
     , mEmittersPool(MaxEmitters)
-    , mEmitterTemplatesPool(MaxEmitterTemplates)
+    , mParticlesAllocator(0, MaxParticles)
     , mRNG(0xDEADC0DE)
 { }
 

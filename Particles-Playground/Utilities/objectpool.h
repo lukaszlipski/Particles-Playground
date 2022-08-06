@@ -11,7 +11,7 @@ public:
     static const Type Invalid = std::numeric_limits<Type>::max();
     static const Type IndexMax = (1 << IndexBitsNum) - 1;
     static const Type GenerationMax = (1 << GenerationBitsNum) - 1;
-    using InnerType = typename Type;
+    using InnerType = Type;
 
     HandleBase()
         : mHandle(Invalid)
@@ -125,8 +125,8 @@ public:
     [[nodiscard]] std::vector<ObjectType*> GetObjects(Pred predicate = {}) const;
     
 private:
-    FreeListAllocator<FirstFitStrategy> mAllocator;
     uint32_t mNumObjects = 0;
+    FreeListAllocator<FirstFitStrategy> mAllocator;
     ObjectType* mObjectMemory = nullptr;
     std::vector<uint8_t> mGenerations;
     std::vector<bool> mValidObjects;

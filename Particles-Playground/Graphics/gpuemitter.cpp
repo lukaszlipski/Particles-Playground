@@ -2,8 +2,8 @@
 #include "Graphics/gpuparticlesystem.h"
 
 GPUEmitter::GPUEmitter(GPUParticleSystem* particleSystem, GPUEmitterTemplateHandle emitterTemplate, uint32_t maxParticles)
-    : mParticleSystem(particleSystem)
-    , mTemplateHandle(emitterTemplate)
+    : mTemplateHandle(emitterTemplate)
+    , mParticleSystem(particleSystem)
 {
     Assert(maxParticles > 0);
 

@@ -39,8 +39,8 @@ public:
     void Free(CPUDescriptorHandle& handle);
 
 private:
+    D3D12_DESCRIPTOR_HEAP_TYPE mType;
     ID3D12DescriptorHeap* mHeap = nullptr;
     FreeListAllocator<FirstFitStrategy> mAllocator;
-    D3D12_DESCRIPTOR_HEAP_TYPE mType;
 
 };

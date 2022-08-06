@@ -76,13 +76,11 @@ void GPUBufferUploadManager::PreUpdate()
 
 UploadBufferTemporaryRangeHandle GPUBufferUploadManager::Reserve(uint32_t size, uint32_t alignment)
 {
-    ID3D12Device* const device = Graphic::Get().GetDevice();
-
     Range alloc = mAllocator.Allocate(size, alignment);
     Assert(alloc.IsValid());
 
     const uint64_t currentFrameNum = Graphic::Get().GetCurrentFrameNumber();
-    mAllocations.push_back({ alloc.Start, alloc.Size, currentFrameNum });
+    mAllocations.push_back({ {alloc.Start, alloc.Size}, currentFrameNum });
 
     return std::make_unique<UploadBufferTemporaryRange>(alloc.Start, alloc.Start + alloc.Size);
 }

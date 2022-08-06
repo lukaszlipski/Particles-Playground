@@ -1,7 +1,9 @@
 #include "cpudescriptorheap.h"
 #include "System/graphic.h"
 
-CPUDescriptorHeap::CPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type) : mType(type), mAllocator(0, DescriptorNum)
+CPUDescriptorHeap::CPUDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type) 
+    : mType(type)
+    , mAllocator(0, DescriptorNum)
 {
     ID3D12Device* const device = Graphic::Get().GetDevice();
 
